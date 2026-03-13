@@ -1,4 +1,4 @@
-# Questions
+# Starting design choices / questions
 
 ## Core
 - Fixed Category/Priority (like v2), or defineable c/p like v1? 
@@ -37,8 +37,16 @@
     - users can freely sign up (aka assigning a new account to their SSH key), and then admins would set permissions
     - users can freely TRY to sign up, but then the admin must approve requests (and set permissions)
 
-# Models
+## ruSSH and ratatui plumbing stuff
+- A single `AppServer`
+- Each client has it's own `App`
+- `App` implements `russh::server::Handler`
+    - `russh` events are parsed into termwiz events and then into my custom event type
+    - The custom event is sent to the `isshues::EventHandler`
+- `App` implements `isshues::EventHandler`. It receives events from an `EventPipe`
+- Theoretically we don't need an "event thread" or something, as there should be 0 polling.
 
+# Models
 ## User(Id, UNIQUE Username, IsAdmin)
 Admins have ALL permissions on all projects.
 
@@ -72,7 +80,7 @@ priority // an integer. In the UI, will be shown as a name, if a "label" is asso
          // eg. LOW = 60, NORMAL = 100, HIGH = 150, CRITICAL = 999
          // with this we can do some crazy calcs
 ```
-in shorthand syntax then use:
+By the way, in shorthand syntax then use:
 + for labels 
 @ for assigning (plus special @NOBODY)
 ! for predefined priorities, or !<integer> for constant
@@ -81,7 +89,7 @@ in shorthand syntax then use:
 ## IssueLabels(IssueId, LabelId)
 
 ## Label(Id, Name, Color, ProjectId)
-In v2 this would correspond to both category roles and tags. Fuck it we merge <C-D-.><C-D-.><C-D-.><C-D-.>
+In v2 this would correspond to both category roles and tags
 
 ## IssueChatMessage(Id, CreatedAt, Content, UserId, IssueId)
 NOTE: we could also even have a discord bot that JUST creates "chat rooms"
