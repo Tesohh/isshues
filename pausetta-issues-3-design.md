@@ -45,6 +45,9 @@
     - The custom event is sent to the `isshues::EventHandler`
 - `App` implements `isshues::EventHandler`. It receives events from an `EventPipe`
 - Theoretically we don't need an "event thread" or something, as there should be 0 polling.
+- MAYBE the `crossterm` thing can be fixed!
+    - By using the `use-dev-tty` feature?? Maybe??
+    - Check https://github.com/cosmikwolf/piped_cli_interactive
 
 # Models
 ## User(Id, UNIQUE Username, IsAdmin)
