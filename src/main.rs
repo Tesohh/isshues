@@ -1,12 +1,10 @@
-pub mod app_client;
-pub mod app_handler;
-pub mod app_server;
-pub mod ssh_terminal_handle;
+pub mod app;
+pub mod ssh;
 
-use crate::app_server::AppServer;
+use crate::ssh::server::Server;
 
 #[tokio::main]
 async fn main() {
-    let mut server = AppServer::new();
+    let mut server = Server::new();
     server.run().await.expect("Failed running server");
 }

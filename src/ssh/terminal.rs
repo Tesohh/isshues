@@ -8,7 +8,7 @@ pub type SshTerminal = Terminal<CrosstermBackend<SshTerminalHandle>>;
 
 pub struct SshTerminalHandle {
     sender: UnboundedSender<Vec<u8>>,
-    // The sink collects the data which is finally sent to sender.
+    /// collects the data which is finally sent to sender
     sink: Vec<u8>,
 }
 
