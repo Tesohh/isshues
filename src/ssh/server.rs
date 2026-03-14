@@ -1,8 +1,11 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, io, sync::Arc};
 
 use ratatui::widgets::{Block, Borders, Clear, Paragraph};
 use russh::{
-    keys::ssh_key::{self, rand_core::OsRng},
+    keys::{
+        Algorithm, PrivateKey,
+        ssh_key::{LineEnding, rand_core::OsRng},
+    },
     server::Server as _,
 };
 use tokio::sync::Mutex;
@@ -16,6 +19,33 @@ pub struct Server {
 
     /// id to assign to the next client
     next_id: usize,
+}
+
+// TODO: fix unwraps
+// TODO: move this in a file
+fn load_or_generate_key() -> Result<PrivateKey, io::Error> {
+    let path = dirs::config_local_dir()
+        .unwrap()
+        // .ok_or_eyre("Failed to get config local dir")?
+        .join("isshues")
+        .join("host_key");
+    let key = if path.exists() {
+        // info!("Loading host key from {}", path.display());
+        PrivateKey::read_openssh_file(&path).unwrap() //.wrap_err("Failed to read host key from file")?
+    } else {
+        // info!(
+        //     "Host key not found at {}. Generating new host key",
+        //     path.display()
+        // );
+        let key = PrivateKey::random(&mut OsRng, Algorithm::Ed25519).unwrap();
+        // .wrap_err("Failed to generate host key")?;
+        std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+        // .wrap_err("Failed to create directory for host key")?;
+        key.write_openssh_file(&path, LineEnding::LF).unwrap();
+        // .wrap_err("Failed to write host key to file")?;
+        key
+    };
+    Ok(key)
 }
 
 impl Server {
@@ -52,9 +82,7 @@ impl Server {
             inactivity_timeout: Some(std::time::Duration::from_secs(3600)),
             auth_rejection_time: std::time::Duration::from_secs(3),
             auth_rejection_time_initial: Some(std::time::Duration::from_secs(0)),
-            keys: vec![
-                russh::keys::PrivateKey::random(&mut OsRng, ssh_key::Algorithm::Ed25519).unwrap(),
-            ],
+            keys: vec![load_or_generate_key().unwrap()], // TODO: remove unwrap
             nodelay: true,
             ..Default::default()
         };
