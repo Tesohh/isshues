@@ -1,4 +1,4 @@
-use std::{collections::HashMap, sync::Arc};
+use std::{collections::HashMap, io, sync::Arc};
 
 use ratatui::{Terminal, TerminalOptions, Viewport, layout::Rect, prelude::CrosstermBackend};
 use russh::{
@@ -24,6 +24,23 @@ impl ClientHandler {
     pub fn new(clients: Arc<Mutex<HashMap<usize, Client>>>, id: usize) -> Self {
         Self { clients, id }
     }
+
+    fn close(
+        &mut self,
+        channel: ChannelId,
+        session: &mut Session,
+        exit_message: &str,
+    ) -> Result<(), io::Error> {
+        let _ = session.data(channel, "\x1b[?1049l\x1b[?25h\x1b[0m".into());
+        let _ = session.data(channel, exit_message.into());
+        let _ = session.data(channel, "\n\n\r".into());
+
+        let _ = session.exit_status_request(channel, 0);
+        let _ = session.eof(channel);
+        let _ = session.close(channel);
+
+        Ok(())
+    }
 }
 
 impl russh::server::Handler for ClientHandler {
@@ -35,6 +52,10 @@ impl russh::server::Handler for ClientHandler {
         channel: Channel<Msg>,
         session: &mut Session,
     ) -> Result<bool, Self::Error> {
+        let _ = session.channel_success(channel.id());
+        // go into alternate screen, move cursor to top left, hide cursor
+        let _ = session.data(channel.id(), "\x1b[?1049h\x1b[H\x1b[?25l".into());
+
         let terminal_handle = SshTerminalHandle::start(session.handle(), channel.id()).await;
 
         let backend = CrosstermBackend::new(terminal_handle);
@@ -45,13 +66,24 @@ impl russh::server::Handler for ClientHandler {
         };
 
         let terminal = Terminal::with_options(backend, options)?;
+
         let app = App::new();
 
         let mut clients = self.clients.lock().await;
         clients.insert(self.id, Client { terminal, app });
-
         Ok(true)
     }
+
+    // async fn shell_request(
+    //     &mut self,
+    //     channel: ChannelId,
+    //     session: &mut Session,
+    // ) -> Result<(), Self::Error> {
+    //     let _ = session.channel_success(channel);
+    //     let _ = session.data(channel, "\x1b[?1049h\x1b[H\x1b[?25l".into());
+    //
+    //     Ok(())
+    // }
 
     async fn auth_publickey(&mut self, _: &str, _: &PublicKey) -> Result<Auth, Self::Error> {
         Ok(Auth::Accept)
@@ -67,8 +99,12 @@ impl russh::server::Handler for ClientHandler {
         match data {
             // Pressing 'q' closes the connection.
             b"q" => {
-                self.clients.lock().await.remove(&self.id);
-                session.close(channel)?;
+                {
+                    let mut clients_lock = self.clients.lock().await;
+                    clients_lock.remove(&self.id);
+                }
+                self.close(channel, session, "harris");
+                // session.close(channel)?;
             }
             // Pressing 'c' resets the counter for the app.
             // Only the client with the id sees the counter reset.
