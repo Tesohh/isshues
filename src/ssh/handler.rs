@@ -33,7 +33,7 @@ impl ClientHandler {
     ) -> Result<(), io::Error> {
         let _ = session.data(channel, "\x1b[?1049l\x1b[?25h\x1b[0m".into());
         let _ = session.data(channel, exit_message.into());
-        let _ = session.data(channel, "\n\n\r".into());
+        let _ = session.data(channel, "\n\r".into());
 
         let _ = session.exit_status_request(channel, 0);
         let _ = session.eof(channel);
@@ -52,10 +52,6 @@ impl russh::server::Handler for ClientHandler {
         channel: Channel<Msg>,
         session: &mut Session,
     ) -> Result<bool, Self::Error> {
-        let _ = session.channel_success(channel.id());
-        // go into alternate screen, move cursor to top left, hide cursor
-        let _ = session.data(channel.id(), "\x1b[?1049h\x1b[H\x1b[?25l".into());
-
         let terminal_handle = SshTerminalHandle::start(session.handle(), channel.id()).await;
 
         let backend = CrosstermBackend::new(terminal_handle);
@@ -74,16 +70,17 @@ impl russh::server::Handler for ClientHandler {
         Ok(true)
     }
 
-    // async fn shell_request(
-    //     &mut self,
-    //     channel: ChannelId,
-    //     session: &mut Session,
-    // ) -> Result<(), Self::Error> {
-    //     let _ = session.channel_success(channel);
-    //     let _ = session.data(channel, "\x1b[?1049h\x1b[H\x1b[?25l".into());
-    //
-    //     Ok(())
-    // }
+    // this is called after the PTY is ready.
+    async fn shell_request(
+        &mut self,
+        channel: ChannelId,
+        session: &mut Session,
+    ) -> Result<(), Self::Error> {
+        let _ = session.channel_success(channel);
+        // go into alternate screen, move cursor to top left, hide cursor
+        let _ = session.data(channel, "\x1b[?1049h\x1b[H\x1b[?25l".into());
+        Ok(())
+    }
 
     async fn auth_publickey(&mut self, _: &str, _: &PublicKey) -> Result<Auth, Self::Error> {
         Ok(Auth::Accept)
@@ -99,12 +96,9 @@ impl russh::server::Handler for ClientHandler {
         match data {
             // Pressing 'q' closes the connection.
             b"q" => {
-                {
-                    let mut clients_lock = self.clients.lock().await;
-                    clients_lock.remove(&self.id);
-                }
-                self.close(channel, session, "harris");
-                // session.close(channel)?;
+                let _ = self.close(channel, session, "Harris");
+                let mut clients_lock = self.clients.lock().await;
+                clients_lock.remove(&self.id);
             }
             // Pressing 'c' resets the counter for the app.
             // Only the client with the id sees the counter reset.
