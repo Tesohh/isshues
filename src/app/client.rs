@@ -1,15 +1,37 @@
-use crate::ssh::terminal::SshTerminal;
+use std::sync::Arc;
+
+use tokio::sync::broadcast;
+use tokio_stream::StreamMap;
+
+use crate::{
+    app::{
+        event::ToClientEvent,
+        event_broker::{ToClientEventBroker, ToClientTopic},
+    },
+    ssh::terminal::SshTerminal,
+};
 
 pub struct Client {
+    pub id: usize,
     pub terminal: SshTerminal,
     pub app: App,
+
+    pub bus: Arc<ToClientEventBroker>,
+    pub subscriptions: StreamMap<ToClientTopic, broadcast::Receiver<ToClientEvent>>,
 }
 
 impl Client {
-    pub fn new(terminal: SshTerminal) -> Self {
+    pub fn new(id: usize, terminal: SshTerminal, bus: Arc<ToClientEventBroker>) -> Self {
+        let mut map = StreamMap::new();
+        let topic = ToClientTopic::Client(id);
+        map.insert(topic, bus.subscribe(topic));
+
         Self {
+            id,
             terminal,
             app: App::default(),
+            bus,
+            subscriptions: map,
         }
     }
 }

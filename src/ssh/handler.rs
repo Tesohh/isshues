@@ -8,19 +8,28 @@ use russh::{
 };
 use tokio::sync::Mutex;
 
-use crate::{app::client::Client, ssh::terminal::SshTerminalHandle};
+use crate::{
+    app::{client::Client, event_broker::ToClientEventBroker},
+    ssh::terminal::SshTerminalHandle,
+};
 
 /// Handles SSH events for and manages a single client.
 pub struct ClientHandler {
     clients: Arc<Mutex<HashMap<usize, Client>>>,
+    bus: Arc<ToClientEventBroker>,
     id: usize,
     input_parser: termwiz::input::InputParser,
 }
 
 impl ClientHandler {
-    pub fn new(clients: Arc<Mutex<HashMap<usize, Client>>>, id: usize) -> Self {
+    pub fn new(
+        clients: Arc<Mutex<HashMap<usize, Client>>>,
+        bus: Arc<ToClientEventBroker>,
+        id: usize,
+    ) -> Self {
         Self {
             clients,
+            bus,
             id,
             input_parser: termwiz::input::InputParser::new(),
         }
@@ -65,7 +74,10 @@ impl russh::server::Handler for ClientHandler {
         let terminal = Terminal::with_options(backend, options)?;
 
         let mut clients = self.clients.lock().await;
-        clients.insert(self.id, Client::new(terminal));
+        clients.insert(
+            self.id,
+            Client::new(self.id, terminal, Arc::clone(&self.bus)),
+        );
         Ok(true)
     }
 

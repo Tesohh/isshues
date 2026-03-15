@@ -5,8 +5,11 @@ use tokio::sync::broadcast;
 
 use crate::app::event::ToClientEvent;
 
-#[derive(Hash, PartialEq, Eq)]
-pub enum ToClientTopic {}
+#[derive(Clone, Copy, Hash, PartialEq, Eq)]
+pub enum ToClientTopic {
+    /// Only subscribed to from the client with that id.
+    Client(usize),
+}
 
 /// Meant to be used as Arc<EventBus>
 pub struct EventBroker<Topic: Hash + PartialEq + Eq, Event: Clone> {
@@ -16,6 +19,11 @@ pub struct EventBroker<Topic: Hash + PartialEq + Eq, Event: Clone> {
 pub type ToClientEventBroker = EventBroker<ToClientTopic, ToClientEvent>;
 
 impl<Topic: Hash + PartialEq + Eq, Event: Clone> EventBroker<Topic, Event> {
+    pub fn new() -> Self {
+        Self {
+            topics: DashMap::new(),
+        }
+    }
     /// Get a receiver to the broadcast channel associated with a topic.
     /// In case it doesn't exist, it will create a new topic channel.
     pub fn subscribe(&self, topic: Topic) -> broadcast::Receiver<Event> {
@@ -42,5 +50,11 @@ impl<Topic: Hash + PartialEq + Eq, Event: Clone> EventBroker<Topic, Event> {
         if let Some(sender) = self.topics.get(&topic) {
             let _ = sender.send(event); // WARNING: this may fail to update some receivers, and it may be ignored, consider logging
         };
+    }
+}
+
+impl<Topic: Hash + PartialEq + Eq, Event: Clone> Default for EventBroker<Topic, Event> {
+    fn default() -> Self {
+        Self::new()
     }
 }

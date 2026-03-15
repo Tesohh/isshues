@@ -10,12 +10,17 @@ use russh::{
 };
 use tokio::sync::Mutex;
 
-use crate::{app::client::Client, ssh::handler::ClientHandler};
+use crate::{
+    app::{client::Client, event_broker::ToClientEventBroker},
+    ssh::handler::ClientHandler,
+};
 
 #[derive(Clone)]
 pub struct Server {
     /// maps client ids to AppClients
     clients: Arc<Mutex<HashMap<usize, Client>>>,
+
+    bus: Arc<ToClientEventBroker>,
 
     /// id to assign to the next client
     next_id: usize,
@@ -53,6 +58,7 @@ impl Server {
         Self {
             clients: Arc::new(Mutex::new(HashMap::new())),
             next_id: 0,
+            bus: Arc::new(ToClientEventBroker::new()),
         }
     }
 
@@ -98,7 +104,11 @@ impl russh::server::Server for Server {
     type Handler = ClientHandler;
     fn new_client(&mut self, _: Option<std::net::SocketAddr>) -> ClientHandler {
         self.next_id += 1;
-        ClientHandler::new(Arc::clone(&self.clients), self.next_id)
+        ClientHandler::new(
+            Arc::clone(&self.clients),
+            Arc::clone(&self.bus),
+            self.next_id,
+        )
     }
 }
 
