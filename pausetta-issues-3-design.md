@@ -49,6 +49,29 @@
     - By using the `use-dev-tty` feature?? Maybe??
     - Check https://github.com/cosmikwolf/piped_cli_interactive
 
+### App-event handling
+Other than clients handling their own events (eg. you press a key), 
+sometimes events may come from the server (eg. a new issue being successfully created (even from myself))
+but sometimes events may go from myself to the server (eg. i request the creation of a new issue)
+
+So i propose a sort of `ServerBroker` that allows:
+1. the server to emit events **towards clients**
+2. the clients to make requests **to the central server**
+through a full duplex MPSC.
+
+Yes, technically everything is running on the same server, but
+ideally clients should never "perform" any DB actions, they should ask the central server struct to do it for them.
+
+Let's look at an example:
+1. User wants to make a new issue
+2. THey go through the form and submit
+3. The client sends a `CreateIssue` event
+4. The server performs the action
+5. The server sends a `IssuesUpdated` event to all clients
+6. Clients refresh
+
+Also the server broker could have a convenience method that sends a "Request" and then waits for a specific response with a specific ID, and returns it.
+
 # Models
 ## User(Id, UNIQUE Username, IsAdmin)
 Admins have ALL permissions on all projects.

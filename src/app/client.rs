@@ -5,6 +5,15 @@ pub struct Client {
     pub app: App,
 }
 
+impl Client {
+    pub fn new(terminal: SshTerminal) -> Self {
+        Self {
+            terminal,
+            app: App::default(),
+        }
+    }
+}
+
 pub struct App {
     pub counter: usize,
 }
