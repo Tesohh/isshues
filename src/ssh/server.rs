@@ -9,6 +9,7 @@ use russh::{
     server::Server as _,
 };
 use tokio::sync::Mutex;
+use tokio_stream::StreamExt;
 
 use crate::{
     app::{client::Client, event_broker::ToClientEventBroker},
@@ -64,24 +65,45 @@ impl Server {
 
     pub async fn run(&mut self) -> Result<(), anyhow::Error> {
         let clients = self.clients.clone();
+        // TEMP: each client should get it's own task.
         tokio::spawn(async move {
-            loop {
-                tokio::time::sleep(tokio::time::Duration::from_secs(1)).await;
+            // TEMP: oh also this works for only one client, as the subscriptions.next() will wait...
+            // loop {
+            for (_, client) in clients.lock().await.iter_mut() {
+                // This
+                println!("draw...");
+                client
+                    .terminal
+                    .draw(|f| {
+                        let area = f.area();
+                        f.render_widget(Clear, area);
+                        let paragraph = Paragraph::new("from the server")
+                            .alignment(ratatui::layout::Alignment::Center);
+                        let block = Block::default().title("Hello world").borders(Borders::ALL);
+                        f.render_widget(paragraph.block(block), area);
+                    })
+                    .unwrap();
 
-                for (_, client) in clients.lock().await.iter_mut() {
-                    client
-                        .terminal
-                        .draw(|f| {
-                            let area = f.area();
-                            f.render_widget(Clear, area);
-                            let paragraph = Paragraph::new("from the server")
-                                .alignment(ratatui::layout::Alignment::Center);
-                            let block = Block::default().title("Hello world").borders(Borders::ALL);
-                            f.render_widget(paragraph.block(block), area);
-                        })
-                        .unwrap();
-                }
+                // println!("waiting for an event...");
+                // let Some((_, event)) = client.subscriptions.next().await else {
+                //     continue;
+                // };
+                //
+                // let event = match event {
+                //     Ok(e) => e,
+                //     Err(err) => {
+                //         eprintln!("TEMP: {}", err);
+                //         continue;
+                //     }
+                // };
+                //
+                // match event {
+                //     crate::app::event::ToClientEvent::Input(input_event) => {
+                //         println!("{:?}", input_event)
+                //     }
+                // }
             }
+            // }
         });
 
         let config = russh::server::Config {

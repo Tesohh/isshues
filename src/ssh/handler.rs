@@ -9,7 +9,11 @@ use russh::{
 use tokio::sync::Mutex;
 
 use crate::{
-    app::{client::Client, event_broker::ToClientEventBroker},
+    app::{
+        client::Client,
+        event::ToClientEvent,
+        event_broker::{ToClientEventBroker, ToClientTopic},
+    },
     ssh::terminal::SshTerminalHandle,
 };
 
@@ -99,29 +103,35 @@ impl russh::server::Handler for ClientHandler {
 
     async fn data(
         &mut self,
-        channel: ChannelId,
+        _channel: ChannelId,
         data: &[u8],
-        session: &mut Session,
+        _session: &mut Session,
     ) -> Result<(), Self::Error> {
         // TODO: termwiz parse this stuff
-        match data {
-            // Pressing 'q' closes the connection.
-            b"q" => {
-                let _ = self.close(channel, session, "Harris");
-                let mut clients_lock = self.clients.lock().await;
-                clients_lock.remove(&self.id);
-            }
-            // Pressing 'c' resets the counter for the app.
-            // Only the client with the id sees the counter reset.
-            b"c" => {
-                let mut clients = self.clients.lock().await;
-                let client = clients.get_mut(&self.id).unwrap();
-                client.app.counter = 0;
-            }
-            _ => {}
-        }
+        // match data {
+        //     // Pressing 'q' closes the connection.
+        //     b"q" => {
+        //         let _ = self.close(channel, session, "Harris");
+        //         let mut clients_lock = self.clients.lock().await;
+        //         clients_lock.remove(&self.id);
+        //     }
+        //     // Pressing 'c' resets the counter for the app.
+        //     // Only the client with the id sees the counter reset.
+        //     b"c" => {
+        //         let mut clients = self.clients.lock().await;
+        //         let client = clients.get_mut(&self.id).unwrap();
+        //         client.app.counter = 0;
+        //     }
+        //     _ => {}
+        // }
+        println!("GOT SOME DATA");
 
-        // let events = self.input_parser.parse_as_vec(data, false);
+        let events = self.input_parser.parse_as_vec(data, false);
+        for event in events {
+            println!("GOT {:?}", event);
+            self.bus
+                .publish(ToClientTopic::Client(self.id), ToClientEvent::Input(event));
+        }
 
         Ok(())
     }

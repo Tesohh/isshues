@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use tokio::sync::broadcast;
-use tokio_stream::StreamMap;
+use tokio_stream::{StreamMap, wrappers::BroadcastStream};
 
 use crate::{
     app::{
@@ -17,14 +17,15 @@ pub struct Client {
     pub app: App,
 
     pub bus: Arc<ToClientEventBroker>,
-    pub subscriptions: StreamMap<ToClientTopic, broadcast::Receiver<ToClientEvent>>,
+    pub subscriptions: StreamMap<ToClientTopic, BroadcastStream<ToClientEvent>>,
 }
 
 impl Client {
     pub fn new(id: usize, terminal: SshTerminal, bus: Arc<ToClientEventBroker>) -> Self {
         let mut map = StreamMap::new();
         let topic = ToClientTopic::Client(id);
-        map.insert(topic, bus.subscribe(topic));
+
+        map.insert(topic, BroadcastStream::new(bus.subscribe(topic)));
 
         Self {
             id,
