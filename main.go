@@ -1,21 +1,22 @@
 package main
 
-// An example Bubble Tea server. This will put an ssh session into alt screen
-// and continually print up to date terminal information.
-
 import (
 	"context"
-	"errors"
 	"fmt"
 	"net"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
+	"charm.land/bubbles/v2/textarea"
+	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
 	"charm.land/wish/v2"
+	"charm.land/wish/v2/activeterm"
 	"charm.land/wish/v2/bubbletea"
 	"charm.land/wish/v2/logging"
 	"github.com/charmbracelet/ssh"
@@ -26,13 +27,27 @@ const (
 	port = "23234"
 )
 
-func main() {
+// app contains a wish server and the list of running programs.
+type app struct {
+	*ssh.Server
+	progs []*tea.Program
+}
+
+// send dispatches a message to all running programs.
+func (a *app) send(msg tea.Msg) {
+	for _, p := range a.progs {
+		go p.Send(msg)
+	}
+}
+
+func newApp() *app {
+	a := new(app)
 	s, err := wish.NewServer(
-		ssh.AllocatePty(),
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
 		wish.WithMiddleware(
-			myCustomBubbleteaMiddleware(),
+			bubbletea.MiddlewareWithProgramHandler(a.ProgramHandler),
+			activeterm.Middleware(),
 			logging.Middleware(),
 		),
 	)
@@ -40,11 +55,17 @@ func main() {
 		log.Error("Could not start server", "error", err)
 	}
 
+	a.Server = s
+	return a
+}
+
+func (a *app) Start() {
+	var err error
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	log.Info("Starting SSH server", "host", host, "port", port)
 	go func() {
-		if err = s.ListenAndServe(); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+		if err = a.ListenAndServe(); err != nil {
 			log.Error("Could not start server", "error", err)
 			done <- nil
 		}
@@ -54,78 +75,127 @@ func main() {
 	log.Info("Stopping SSH server")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer func() { cancel() }()
-	if err := s.Shutdown(ctx); err != nil && !errors.Is(err, ssh.ErrServerClosed) {
+	if err := a.Shutdown(ctx); err != nil {
 		log.Error("Could not stop server", "error", err)
 	}
 }
 
-// You can write your own custom bubbletea middleware that wraps tea.Program.
-// Make sure you set the program input and output to ssh.Session.
-func myCustomBubbleteaMiddleware() wish.Middleware {
-	newProg := func(m tea.Model, opts ...tea.ProgramOption) *tea.Program {
-		p := tea.NewProgram(m, opts...)
-		go func() {
-			for {
-				<-time.After(1 * time.Second)
-				p.Send(timeMsg(time.Now()))
-			}
-		}()
-		return p
-	}
-	teaHandler := func(s ssh.Session) *tea.Program {
-		pty, _, active := s.Pty()
-		if !active {
-			wish.Fatalln(s, "no active terminal, skipping")
-			return nil
-		}
-		m := model{
-			term:   pty.Term,
-			width:  pty.Window.Width,
-			height: pty.Window.Height,
-			time:   time.Now(),
-		}
-		return newProg(m, bubbletea.MakeOptions(s)...)
-	}
-	return bubbletea.MiddlewareWithProgramHandler(teaHandler)
+func (a *app) ProgramHandler(s ssh.Session) *tea.Program {
+	model := initialModel()
+	model.app = a
+	model.id = s.User()
+
+	p := tea.NewProgram(model, bubbletea.MakeOptions(s)...)
+	a.progs = append(a.progs, p)
+
+	return p
 }
 
-// Just a generic tea.Model to demo terminal information of ssh.
+func main() {
+	app := newApp()
+	app.Start()
+}
+
+type (
+	errMsg  error
+	chatMsg struct {
+		id   string
+		text string
+	}
+)
+
 type model struct {
-	term   string
-	width  int
-	height int
-	time   time.Time
+	*app
+	viewport    viewport.Model
+	messages    []string
+	id          string
+	textarea    *textarea.Model
+	senderStyle lipgloss.Style
+	err         error
 }
 
-type timeMsg time.Time
+func initialModel() model {
+	ta := textarea.New()
+	ta.Placeholder = "Send a message..."
+	ta.Focus()
+
+	ta.Prompt = "┃ "
+	ta.CharLimit = 280
+
+	ta.SetWidth(30)
+	ta.SetHeight(3)
+
+	// Remove cursor line styling
+	taStyles := ta.Styles()
+	taStyles.Focused.CursorLine = lipgloss.NewStyle()
+	ta.SetStyles(taStyles)
+
+	ta.ShowLineNumbers = false
+
+	vp := viewport.New(viewport.WithWidth(30), viewport.WithHeight(5))
+	vp.SetContent(`Welcome to the chat room!
+Type a message and press Enter to send.`)
+
+	ta.KeyMap.InsertNewline.SetEnabled(false)
+
+	return model{
+		textarea:    &ta,
+		messages:    []string{},
+		viewport:    vp,
+		senderStyle: lipgloss.NewStyle().Foreground(lipgloss.Color("5")),
+		err:         nil,
+	}
+}
 
 func (m model) Init() tea.Cmd {
-	return nil
+	return textarea.Blink
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	ti, tiCmd := m.textarea.Update(msg)
+	m.textarea = &ti
+	vp, vpCmd := m.viewport.Update(msg)
+	m.viewport = vp
+
 	switch msg := msg.(type) {
-	case timeMsg:
-		m.time = time.Time(msg)
-	case tea.WindowSizeMsg:
-		m.height = msg.Height
-		m.width = msg.Width
 	case tea.KeyMsg:
-		switch msg.String() {
-		case "q", "ctrl+c":
-			return m, tea.Quit
+		switch msg.Key().Mod {
+		case tea.ModCtrl: // We're only interested in ctrl+<key>
+			switch msg.Key().Code {
+			case 'c':
+				return m, tea.Quit
+			}
 		}
+		switch msg.Key().Code {
+		case tea.KeyEsc:
+			return m, tea.Quit
+		case tea.KeyEnter:
+			m.app.send(chatMsg{
+				id:   m.id,
+				text: m.textarea.Value(),
+			})
+			m.textarea.Reset()
+		}
+
+	case chatMsg:
+		m.messages = append(m.messages, m.senderStyle.Render(msg.id)+": "+msg.text)
+		m.viewport.SetContent(strings.Join(m.messages, "\n"))
+		m.viewport.GotoBottom()
+
+	// We handle errors just like any other message
+	case errMsg:
+		m.err = msg
+		return m, nil
 	}
-	return m, nil
+
+	return m, tea.Batch(tiCmd, vpCmd)
 }
 
 func (m model) View() tea.View {
-	s := "Your term is %s\n"
-	s += "Your window size is x: %d y: %d\n"
-	s += "Time: " + m.time.Format(time.RFC1123) + "\n\n"
-	s += "Press 'q' to quit\n"
-	content := fmt.Sprintf(s, m.term, m.width, m.height)
-	v := tea.NewView(content)
-	v.AltScreen = true
+	v := tea.NewView(fmt.Sprintf(
+		"%s\n\n%s",
+		m.viewport.View(),
+		m.textarea.View(),
+	) + "\n\n")
 	return v
 }
