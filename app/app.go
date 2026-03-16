@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"context"
@@ -15,24 +15,29 @@ import (
 	"charm.land/wish/v2/bubbletea"
 	"charm.land/wish/v2/logging"
 	"github.com/charmbracelet/ssh"
-	"github.com/spf13/cobra"
 )
 
 // App contains a wish server and the list of running programs.
 type App struct {
 	*ssh.Server
+	host string
+	port string
+
 	progs []*tea.Program
 }
 
 // send dispatches a message to all running programs
+// TODO: consider making an interface for this to be used in models in another packages.
 func (a *App) Broadcast(msg tea.Msg) {
 	for _, p := range a.progs {
 		go p.Send(msg)
 	}
 }
 
-func NewApp() *App {
+func NewApp(host, port string) *App {
 	a := new(App)
+	a.host = host
+	a.port = port
 
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
@@ -55,7 +60,7 @@ func (a *App) Start() {
 	var err error
 	done := make(chan os.Signal, 1)
 	signal.Notify(done, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-	log.Info("Starting SSH server", "host", host, "port", port)
+	log.Info("Starting SSH server", "host", a.host, "port", a.port)
 	go func() {
 		if err = a.ListenAndServe(); err != nil {
 			log.Error("Could not start server", "error", err)
@@ -72,38 +77,6 @@ func (a *App) Start() {
 	}
 }
 
-func cmd(session ssh.Session, app *App, progPtr **tea.Program) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:  "isshues",
-		Args: cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			model := initialModel()
-			model.App = app // each model gets a reference to the global App
-			model.id = session.User()
-
-			*progPtr = tea.NewProgram(model, bubbletea.MakeOptions(session)...)
-			log.Info("root command called")
-			app.progs = append(app.progs, *progPtr)
-
-			return nil
-		},
-	}
-	return cmd
-}
-
-func subcmdtest() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:  "test",
-		Args: cobra.ExactArgs(0),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			log.Info("exedcuted test subcommand")
-			return nil
-		},
-	}
-	return cmd
-
-}
-
 // function called by wish to create a new tea.Program
 func (a *App) ProgramHandler(session ssh.Session) *tea.Program {
 	var prog *tea.Program
@@ -113,8 +86,8 @@ func (a *App) ProgramHandler(session ssh.Session) *tea.Program {
 	rootCmd.SetIn(session)
 	rootCmd.SetOut(session)
 	rootCmd.SetErr(session.Stderr())
-	rootCmd.AddCommand(subcmdtest())
-	// rootCmd.CompletionOptions.DisableDefaultCmd = true
+	rootCmd.AddCommand(subcmdtest(session, a, &prog))
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	if err := rootCmd.Execute(); err != nil {
 		log.Error(err)
 		_ = session.Exit(1)

@@ -1,4 +1,4 @@
-package main
+package app
 
 import (
 	"fmt"
@@ -19,7 +19,7 @@ type (
 )
 
 type model struct {
-	*App
+	app         *App
 	viewport    viewport.Model
 	messages    []string
 	id          string
@@ -84,7 +84,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEsc:
 			return m, tea.Quit
 		case tea.KeyEnter:
-			m.App.Broadcast(chatMsg{
+			m.app.Broadcast(chatMsg{
 				id:   m.id,
 				text: m.textarea.Value(),
 			})
