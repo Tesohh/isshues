@@ -38,40 +38,33 @@
     - users can freely sign up (aka assigning a new account to their SSH key), and then admins would set permissions
     - users can freely TRY to sign up, but then the admin must approve requests (and set permissions)
 
-## ruSSH and ratatui plumbing stuff
-- A single `AppServer`
-- Each client has it's own `App`
-- `App` implements `russh::server::Handler`
-    - `russh` events are parsed into termwiz events and then into my custom event type
-    - The custom event is sent to the `isshues::EventHandler`
-- `App` implements `isshues::EventHandler`. It receives events from an `EventPipe`
-- Theoretically we don't need an "event thread" or something, as there should be 0 polling.
-- MAYBE the `crossterm` thing can be fixed!
-    - By using the `use-dev-tty` feature?? Maybe??
-    - Check https://github.com/cosmikwolf/piped_cli_interactive
-
-### App-event handling
-Other than clients handling their own events (eg. you press a key), 
-sometimes events may come from the server (eg. a new issue being successfully created (even from myself))
-but sometimes events may go from myself to the server (eg. i request the creation of a new issue)
-
-So i propose a sort of `ServerBroker` that allows:
-1. the server to emit events **towards clients**
-2. the clients to make requests **to the central server**
-through a full duplex MPSC.
-
-Yes, technically everything is running on the same server, but
-ideally clients should never "perform" any DB actions, they should ask the central server struct to do it for them.
-
+### tea Messages, caching and other optimizations
+a possibility for optimizing (not doing too many queries) is to do this.
 Let's look at an example:
-1. User wants to make a new issue
-2. THey go through the form and submit
-3. The client sends a `CreateIssue` event
-4. The server performs the action
-5. The server sends a `IssuesUpdated` event to all clients
-6. Clients refresh
+1. A user completes an issue #13
+2. a `tea.Cmd` is issued to edit the issue in the database
+3. a `tea.Msg` tells all clients that #13 was updated
+4. now here we have to choose: 
+    - do we send the new data together with the `tea.Msg`?
+    - or do we just say "hey it updated, go fetch it yourself"
+        - in this case a *cache* could be useful.
+            - does the requested issue already exist in the cache? return it
+            - does it not exist? query it and return it
+            - did we get a tea.Msg telling us that a certain issue is updated? requery it
+    - or we can also do it like this:
+        - client A updates db entry
+        - client A will fetch and broadcast_exclusively (everyone except A) the new db entry to all clients X
+        - client A refreshes it's view(s) accordingly
+        - all clients X will refresh their view(s) accordingly
+    - or
+        - client logs in, selects a project.
+        - load all necessary data from that project (ie. all issues, labels, priorities....)
+            - except that data is already "on" the server (keep in mind "clients" are actually on the server)
+            - so what do we do in this case?
+            - use the cache method?
+            - fuck it we can just run a query. shouldn't be that slow... plus we're not scaling to millions of users...
+        - when another client changes something about 
 
-Also the server broker could have a convenience method that sends a "Request" and then waits for a specific response with a specific ID, and returns it.
 
 # Models
 ## User(Id, UNIQUE Username, IsAdmin)
