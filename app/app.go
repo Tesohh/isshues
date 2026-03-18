@@ -81,6 +81,8 @@ func (a *App) Start() {
 func (a *App) ProgramHandler(session ssh.Session) *tea.Program {
 	var prog *tea.Program
 
+	session.PublicKey()
+
 	rootCmd := cmd(session, a, &prog)
 	rootCmd.SetArgs(session.Command())
 	rootCmd.SetIn(session)

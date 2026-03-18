@@ -6,6 +6,9 @@
   - Github has "labels". I think we can use that for categories, instead of fixed categories.
   - Priority can be a separate field. It would be defined PER PROJECT and a setting would let you set a priority order,
     useful for sorting.
+
+  - Actually NO; let's do labels, with some having additional data (eg. color). 
+  - Priorities are fixed, but in the server config you can set "thresholds" for integer values. 
 - statuses?
     - Two options:
         - Have fixed statuses: Todo, Doing, Done, Cancelled
@@ -99,11 +102,13 @@ recruiter_user_id
 priority // an integer. In the UI, will be shown as a name, if a "label" is associated to this specific value.
          // eg. LOW = 60, NORMAL = 100, HIGH = 150, CRITICAL = 999
          // with this we can do some crazy calcs
+         // eg. a "heat" statistic which is the average of the priorities
 ```
 By the way, in shorthand syntax then use:
 + for labels 
 @ for assigning (plus special @NOBODY)
 ! for predefined priorities, or !<integer> for constant
+> for dependencies
 
 ## IssueAssignees(IssueId, UserId)
 ## IssueLabels(IssueId, LabelId)
