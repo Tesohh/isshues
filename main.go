@@ -1,7 +1,13 @@
 package main
 
 import (
+	"context"
+	"log"
+	"os"
+
 	"github.com/Tesohh/isshues/app"
+	"github.com/jackc/pgx/v5"
+	_ "github.com/joho/godotenv/autoload"
 )
 
 const (
@@ -10,6 +16,12 @@ const (
 )
 
 func main() {
-	app := app.NewApp(host, port)
+	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+
+	if err != nil {
+		log.Fatalln("cannot connect to database!", err)
+	}
+
+	app := app.NewApp(host, port, conn)
 	app.Start()
 }

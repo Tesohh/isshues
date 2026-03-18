@@ -14,7 +14,9 @@ import (
 	"charm.land/wish/v2/activeterm"
 	"charm.land/wish/v2/bubbletea"
 	"charm.land/wish/v2/logging"
+	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/charmbracelet/ssh"
+	"github.com/jackc/pgx/v5"
 )
 
 // App contains a wish server and the list of running programs.
@@ -22,6 +24,8 @@ type App struct {
 	*ssh.Server
 	host string
 	port string
+
+	DB *db.Queries
 
 	progs []*tea.Program
 }
@@ -34,10 +38,12 @@ func (a *App) Broadcast(msg tea.Msg) {
 	}
 }
 
-func NewApp(host, port string) *App {
+func NewApp(host, port string, dbConn *pgx.Conn) *App {
 	a := new(App)
 	a.host = host
 	a.port = port
+
+	a.DB = db.New(dbConn)
 
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
