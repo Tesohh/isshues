@@ -1,7 +1,0 @@
-FROM golang:1.26.1-alpine3.23 as base
-FROM base as dev
-
-RUN go install github.com/air-verse/air@latest
-
-WORKDIR /app
-CMD ["air"]
