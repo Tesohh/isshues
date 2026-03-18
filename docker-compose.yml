@@ -1,0 +1,30 @@
+services:
+  postgres:
+    image: 'postgres:18.3'
+    restart: always
+    networks:
+      - db_network
+    ports:
+      - 5432:5432
+    env_file:
+      - .env
+    volumes:
+      - postgres-data:/var/lib/postgresql/18/
+  
+  adminer:
+    image: adminer
+    restart: always
+    networks:
+      - db_network
+    ports:
+      - 8080:8080 
+    env_file:
+      - .env
+    depends_on:
+      - postgres
+
+volumes:
+  postgres-data:
+  
+networks:
+  db_network:
