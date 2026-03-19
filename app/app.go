@@ -27,6 +27,8 @@ type App struct {
 
 	DB *db.Queries
 
+	sessionIdToUserIds map[string]int64
+
 	progs []*tea.Program
 }
 
@@ -48,8 +50,12 @@ func NewApp(host, port string, dbConn *pgx.Conn) *App {
 	s, err := wish.NewServer(
 		wish.WithAddress(net.JoinHostPort(host, port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
+		wish.WithPublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
+			return key.Type() == "ssh-ed25519"
+		}),
 		wish.WithMiddleware(
 			bubbletea.MiddlewareWithProgramHandler(a.ProgramHandler),
+			a.AuthMiddleware,
 			activeterm.Middleware(),
 			logging.Middleware(),
 		),

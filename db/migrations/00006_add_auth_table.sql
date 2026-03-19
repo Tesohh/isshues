@@ -1,7 +1,7 @@
 -- +goose Up
 CREATE TABLE user_ssh_keys (
     user_id BIGINT NOT NULL REFERENCES users(id),
-    ssh_public_key text NOT NULL
+    fingerprint CHAR(44) NOT NULL
 );
 
 -- +goose Down
