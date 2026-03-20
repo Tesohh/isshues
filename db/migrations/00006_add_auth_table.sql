@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TABLE user_ssh_keys (
-    user_id BIGINT NOT NULL REFERENCES users(id),
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     fingerprint CHAR(44) NOT NULL
 );
 

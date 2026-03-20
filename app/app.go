@@ -44,6 +44,7 @@ func NewApp(host, port string, dbConn *pgx.Conn) *App {
 	a := new(App)
 	a.host = host
 	a.port = port
+	a.sessionIdToUserIds = make(map[string]int64)
 
 	a.DB = db.New(dbConn)
 
