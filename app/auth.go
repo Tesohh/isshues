@@ -37,7 +37,7 @@ func (a *App) AuthMiddleware(next ssh.Handler) ssh.Handler {
 				return
 			}
 
-			if isTaken == 1 {
+			if isTaken {
 				// Username exists --> For now, error. In the future, ask other device to register you.
 				log.Warn("failed login attempt", "user", s.User(), "isTaken", isTaken, "err", err)
 				wish.Println(s, "This username is already registered. For now, you can't register any other public key.")
