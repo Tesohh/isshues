@@ -25,3 +25,13 @@ SELECT EXISTS (
     SELECT 1 FROM global_user_permissions
     WHERE user_id = $1 AND global_permission_id = $2
 );
+
+-- name: UserIsMemberOfProject :one
+-- You are a member if you are in at least one group inside of a project.
+SELECT EXISTS (
+    SELECT 1 FROM user_group_memberships mb
+    JOIN groups g ON mb.group_id = g.id
+    WHERE mb.user_id = $1 
+    AND g.project_id = $2
+);
+
