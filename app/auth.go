@@ -44,7 +44,7 @@ func (a *App) AuthMiddleware(next ssh.Handler) ssh.Handler {
 			}
 
 			// Username does not exist --> Create new account with that username and register this SSH key
-			userId, err = a.DB.InsertUser(ctx, db.InsertUserParams{Username: s.User(), IsAdmin: "false"})
+			userId, err = a.DB.InsertUser(ctx, s.User())
 			if err != nil {
 				log.Error("user creation error", "username", s.User(), "err", err)
 				wish.Println(s, "There has been an error in creating your user.")
