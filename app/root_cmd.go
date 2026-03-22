@@ -1,6 +1,8 @@
 package app
 
 import (
+	"errors"
+
 	tea "charm.land/bubbletea/v2"
 	"charm.land/log/v2"
 	"charm.land/wish/v2/bubbletea"
@@ -18,7 +20,12 @@ func cmd(session ssh.Session, app *App, progPtr **tea.Program) *cobra.Command {
 		Use:  "isshues",
 		Args: cobra.ExactArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			model := initialModel()
+			userId, ok := app.sessionIdToUserIds[session.Context().SessionID()]
+			if !ok {
+				return errors.New("your userid was not found in the session map. might be an auth issue.")
+			}
+
+			model := initialModel(app, userId)
 			model.app = app // each model gets a reference to the global App
 			model.id = session.User()
 

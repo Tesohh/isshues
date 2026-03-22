@@ -32,6 +32,10 @@ type App struct {
 	progs []*tea.Program
 }
 
+func (a *App) GetDB() *db.Queries {
+	return a.DB
+}
+
 // send dispatches a message to all running programs
 // TODO: consider making an interface for this to be used in models in another packages.
 func (a *App) Broadcast(msg tea.Msg) {
