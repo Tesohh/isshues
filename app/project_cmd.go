@@ -1,0 +1,147 @@
+package app
+
+import (
+	"context"
+	"errors"
+	"strings"
+
+	tea "charm.land/bubbletea/v2"
+	"charm.land/log/v2"
+	db "github.com/Tesohh/isshues/db/generated"
+	"github.com/Tesohh/isshues/projects"
+	"github.com/charmbracelet/ssh"
+	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/spf13/cobra"
+)
+
+var (
+	NotAuthorizedCreateErr = errors.New("you are not allowed to do this. your account is missing the create-projects global permission")
+	InternalDbErr          = errors.New("internal db error. please contact your admin.")
+	Prefix4Err             = errors.New("the prefix must be 4 characters long")
+	DuplicatePrefixErr     = errors.New("this prefix is already taken")
+)
+
+func projectCmd(session ssh.Session, app *App, _ **tea.Program) *cobra.Command {
+	projectCmd := &cobra.Command{
+		Use: "project",
+	}
+
+	newCmd := &cobra.Command{
+		Use:  "new [prefix] [title]",
+		Args: cobra.MinimumNArgs(2),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			userId, ok := app.sessionIdToUserIds[session.Context().SessionID()]
+			if !ok {
+				return errors.New("your userid was not found in the session map. might be an auth issue.")
+			}
+
+			ctx := context.Background()
+			authorized, err := app.GetDB().UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
+				UserID:             userId,
+				GlobalPermissionID: "create-projects",
+			})
+
+			if err != nil {
+				log.Error("project new: auth query error", "err", err)
+				return InternalDbErr
+			}
+			if !authorized {
+				return NotAuthorizedCreateErr
+			}
+
+			prefix := strings.ToUpper(args[0])
+			if len(prefix) != 4 {
+				return Prefix4Err
+			}
+			title := strings.Join(args[1:], " ")
+
+			// create the project
+			projectId, err := app.GetDB().InsertProject(ctx, db.InsertProjectParams{
+				Title:  title,
+				Prefix: prefix,
+			})
+			var pgerr *pgconn.PgError
+			if errors.As(err, &pgerr) && pgerr.Code == "23505" {
+				return DuplicatePrefixErr
+			} else if err != nil {
+				log.Error("project new: insertion error", "err", err)
+				return InternalDbErr
+			}
+
+			// add default groups
+			// TODO: get these from the server config
+			groups := makeDefaultGroups(projectId)
+			groupIds := []int64{}
+			for _, group := range groups {
+				groupId, err := app.GetDB().InsertGroup(ctx, group.params)
+				if err != nil {
+					log.Error("project new: group insertion error", "err", err)
+					return InternalDbErr
+				}
+				groupIds = append(groupIds, groupId)
+
+				for _, permission := range group.permissions {
+					err := app.GetDB().GrantPermissionToGroup(ctx, db.GrantPermissionToGroupParams{
+						GroupID:             groupId,
+						ProjectPermissionID: permission,
+					})
+					if err != nil {
+						log.Error("project new: group grant permission error", "err", err, "permission", permission)
+						return InternalDbErr
+					}
+				}
+			}
+
+			// add creator to the admins group
+			err = app.GetDB().AddUserToGroup(ctx, db.AddUserToGroupParams{
+				GroupID: groupIds[0],
+				UserID:  userId,
+			})
+			if err != nil {
+				log.Error("project new: cannot add creator to group", "err", err)
+				return InternalDbErr
+			}
+
+			cmd.Println("project created!")
+			app.Broadcast(projects.RefreshProjectsMsg{})
+
+			return nil
+		},
+	}
+
+	projectCmd.AddCommand(newCmd)
+
+	return projectCmd
+}
+
+type defaultGroup struct {
+	params      db.InsertGroupParams
+	permissions []string
+}
+
+func makeDefaultGroups(projectId int64) []defaultGroup {
+	return []defaultGroup{
+		{
+			params: db.InsertGroupParams{
+				Name:      pgtype.Text{String: "admins", Valid: true},
+				ProjectID: projectId,
+			},
+			permissions: []string{"write-issues", "read-issues", "edit-project", "delete-project"},
+		},
+		{
+			params: db.InsertGroupParams{
+				Name:      pgtype.Text{String: "devs", Valid: true},
+				ProjectID: projectId,
+			},
+			permissions: []string{"write-issues", "read-issues"},
+		},
+		{
+			params: db.InsertGroupParams{
+				Name:      pgtype.Text{String: "guests", Valid: true},
+				ProjectID: projectId,
+			},
+			permissions: []string{"read-issues"},
+		},
+	}
+}

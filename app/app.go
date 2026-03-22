@@ -106,6 +106,7 @@ func (a *App) ProgramHandler(session ssh.Session) *tea.Program {
 	rootCmd.SetOut(session)
 	rootCmd.SetErr(session.Stderr())
 	rootCmd.AddCommand(subcmdtest(session, a, &prog))
+	rootCmd.AddCommand(projectCmd(session, a, &prog))
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	if err := rootCmd.Execute(); err != nil {
 		log.Error(err)

@@ -66,7 +66,6 @@ func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 		cmd = m.FetchProjectsCmd
 	case UpdateProjectsMsg:
 		m.list.SetItems(itemsFromProjects(msg.Projects))
-
 	}
 
 	var listCmd tea.Cmd
