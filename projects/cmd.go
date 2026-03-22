@@ -8,6 +8,10 @@ import (
 	db "github.com/Tesohh/isshues/db/generated"
 )
 
+// Ask the projects view to refetch projects
+type RefreshProjectsMsg struct{}
+
+// Projects have been fetched, here is what the query got.
 type UpdateProjectsMsg struct {
 	Projects []db.Project
 }

@@ -58,17 +58,20 @@ func (m ProjectsView) Init() tea.Cmd {
 }
 
 func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetSize(msg.Width, msg.Height)
+	case RefreshProjectsMsg:
+		cmd = m.FetchProjectsCmd
 	case UpdateProjectsMsg:
 		m.list.SetItems(itemsFromProjects(msg.Projects))
 
 	}
 
-	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
-	return m, cmd
+	var listCmd tea.Cmd
+	m.list, listCmd = m.list.Update(msg)
+	return m, tea.Batch(cmd, listCmd)
 
 }
 func (m ProjectsView) View() string {
