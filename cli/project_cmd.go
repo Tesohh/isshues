@@ -1,4 +1,4 @@
-package app
+package cli
 
 import (
 	"context"
@@ -7,8 +7,9 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/log/v2"
+	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
-	"github.com/Tesohh/isshues/projects"
+	"github.com/Tesohh/isshues/model/projects"
 	"github.com/charmbracelet/ssh"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -22,7 +23,7 @@ var (
 	DuplicatePrefixErr     = errors.New("this prefix is already taken")
 )
 
-func projectCmd(session ssh.Session, app *App, _ **tea.Program) *cobra.Command {
+func projectCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Command {
 	projectCmd := &cobra.Command{
 		Use: "project",
 	}
@@ -31,7 +32,7 @@ func projectCmd(session ssh.Session, app *App, _ **tea.Program) *cobra.Command {
 		Use:  "new [prefix] [title]",
 		Args: cobra.MinimumNArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			userId, ok := app.sessionIdToUserIds[session.Context().SessionID()]
+			userId, ok := app.SessionIdToUserIds[session.Context().SessionID()]
 			if !ok {
 				return errors.New("your userid was not found in the session map. might be an auth issue.")
 			}

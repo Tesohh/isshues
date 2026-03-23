@@ -17,6 +17,7 @@ import (
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/charmbracelet/ssh"
 	"github.com/jackc/pgx/v5"
+	"github.com/spf13/cobra"
 )
 
 // App contains a wish server and the list of running programs.
@@ -27,9 +28,9 @@ type App struct {
 
 	DB *db.Queries
 
-	sessionIdToUserIds map[string]int64
+	SessionIdToUserIds map[string]int64
 
-	progs []*tea.Program
+	Progs []*tea.Program
 }
 
 func (a *App) GetDB() *db.Queries {
@@ -39,16 +40,18 @@ func (a *App) GetDB() *db.Queries {
 // send dispatches a message to all running programs
 // TODO: consider making an interface for this to be used in models in another packages.
 func (a *App) Broadcast(msg tea.Msg) {
-	for _, p := range a.progs {
+	for _, p := range a.Progs {
 		go p.Send(msg)
 	}
 }
 
-func NewApp(host, port string, dbConn *pgx.Conn) *App {
+type isshuesCmd func(session ssh.Session, app *App, progPtr **tea.Program) *cobra.Command
+
+func NewApp(host, port string, dbConn *pgx.Conn, rootCmd isshuesCmd) *App {
 	a := new(App)
 	a.host = host
 	a.port = port
-	a.sessionIdToUserIds = make(map[string]int64)
+	a.SessionIdToUserIds = make(map[string]int64)
 
 	a.DB = db.New(dbConn)
 
@@ -59,7 +62,7 @@ func NewApp(host, port string, dbConn *pgx.Conn) *App {
 			return key.Type() == "ssh-ed25519"
 		}),
 		wish.WithMiddleware(
-			bubbletea.MiddlewareWithProgramHandler(a.ProgramHandler),
+			bubbletea.MiddlewareWithProgramHandler(a.MakeProgramHandler(rootCmd)),
 			a.AuthMiddleware,
 			activeterm.Middleware(),
 			logging.Middleware(),
@@ -95,24 +98,24 @@ func (a *App) Start() {
 }
 
 // function called by wish to create a new tea.Program
-func (a *App) ProgramHandler(session ssh.Session) *tea.Program {
-	var prog *tea.Program
+func (a *App) MakeProgramHandler(rootCmd isshuesCmd) func(session ssh.Session) *tea.Program {
+	return func(session ssh.Session) *tea.Program {
+		var prog *tea.Program
 
-	session.PublicKey()
+		session.PublicKey()
 
-	rootCmd := cmd(session, a, &prog)
-	rootCmd.SetArgs(session.Command())
-	rootCmd.SetIn(session)
-	rootCmd.SetOut(session)
-	rootCmd.SetErr(session.Stderr())
-	rootCmd.AddCommand(subcmdtest(session, a, &prog))
-	rootCmd.AddCommand(projectCmd(session, a, &prog))
-	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	if err := rootCmd.Execute(); err != nil {
-		log.Error(err)
-		_ = session.Exit(1)
-		return nil
+		rootCmd := rootCmd(session, a, &prog)
+		rootCmd.SetArgs(session.Command())
+		rootCmd.SetIn(session)
+		rootCmd.SetOut(session)
+		rootCmd.SetErr(session.Stderr())
+		rootCmd.CompletionOptions.DisableDefaultCmd = true
+		if err := rootCmd.Execute(); err != nil {
+			log.Error(err)
+			_ = session.Exit(1)
+			return nil
+		}
+
+		return prog
 	}
-
-	return prog
 }

@@ -26,7 +26,7 @@ func (a *App) AuthMiddleware(next ssh.Handler) ssh.Handler {
 		switch err {
 		case nil:
 			// This SSH key is associated with an account, perfect! just save it to the map and go on.
-			a.sessionIdToUserIds[s.Context().SessionID()] = userId
+			a.SessionIdToUserIds[s.Context().SessionID()] = userId
 			next(s)
 		case pgx.ErrNoRows:
 			// This SSH key is not associated with any account!
@@ -65,7 +65,7 @@ func (a *App) AuthMiddleware(next ssh.Handler) ssh.Handler {
 
 			log.Info("added ssh key to user", "id", userId, "username", s.User())
 
-			a.sessionIdToUserIds[s.Context().SessionID()] = userId
+			a.SessionIdToUserIds[s.Context().SessionID()] = userId
 			next(s)
 		default:
 			wish.Println(s, "There has been an error in authenticating you.")

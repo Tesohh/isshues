@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/Tesohh/isshues/app"
+	"github.com/Tesohh/isshues/cli"
 	"github.com/jackc/pgx/v5"
 	_ "github.com/joho/godotenv/autoload"
 )
@@ -22,6 +23,6 @@ func main() {
 		log.Fatalln("cannot connect to database!", err)
 	}
 
-	app := app.NewApp(host, port, conn)
+	app := app.NewApp(host, port, conn, cli.RootCmd)
 	app.Start()
 }
