@@ -1,47 +1,26 @@
 package projects
 
 import (
-	"fmt"
+	"context"
 
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/huh/v2"
+	"charm.land/lipgloss/v2"
+	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
 )
 
-type item struct {
-	title, desc string
-}
-
-func itemFromProject(p db.Project) item {
-	return item{
-		title: fmt.Sprintf("#%s %s", p.Prefix, p.Title),
-		desc:  "TODO!",
-	}
-}
-func itemsFromProjects(ps []db.Project) []list.Item {
-	items := []list.Item{}
-	for _, p := range ps {
-		items = append(items, itemFromProject(p))
-	}
-	return items
-}
-
-func (i item) Title() string       { return i.title }
-func (i item) Description() string { return i.desc }
-func (i item) FilterValue() string { return i.title }
-
-type apper interface {
-	GetDB() *db.Queries
-}
-
 type ProjectsView struct {
 	list list.Model
-	app  apper
+	app  *app.App
+
+	creationForm *huh.Form
 
 	userId int64
 }
 
-func New(userId int64, app apper) ProjectsView {
+func New(userId int64, app *app.App) ProjectsView {
 	m := ProjectsView{
 		list:   list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
 		app:    app,
@@ -59,6 +38,8 @@ func (m ProjectsView) Init() tea.Cmd {
 
 func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 	var cmd tea.Cmd
+	var formIsNew bool
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetSize(msg.Width, msg.Height)
@@ -66,14 +47,63 @@ func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 		cmd = m.FetchProjectsCmd
 	case UpdateProjectsMsg:
 		m.list.SetItems(itemsFromProjects(msg.Projects))
+	case tea.KeyPressMsg:
+		if msg.String() == "+" && m.creationForm == nil {
+			ctx := context.Background()
+			hasPermission, _ := m.app.DB.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
+				UserID:             m.userId,
+				GlobalPermissionID: "create-projects",
+			})
+			// TODO: handle error
+
+			if !hasPermission {
+				break
+			}
+
+			m.creationForm = MakeForm()
+			cmd = m.creationForm.Init()
+			formIsNew = true
+		}
 	}
 
-	var listCmd tea.Cmd
-	m.list, listCmd = m.list.Update(msg)
-	return m, tea.Batch(cmd, listCmd)
+	var listCmd, formCmd tea.Cmd
+
+	if m.creationForm != nil && !formIsNew {
+		var form huh.Model
+		form, formCmd = m.creationForm.Update(msg)
+		if f, ok := form.(*huh.Form); ok {
+			m.creationForm = f
+		}
+
+		switch m.creationForm.State {
+		case huh.StateCompleted:
+			// TODO: send tea.Cmd
+			m.creationForm = nil
+		case huh.StateAborted:
+			m.creationForm = nil
+		}
+	} else {
+		m.list, listCmd = m.list.Update(msg)
+	}
+
+	return m, tea.Batch(cmd, listCmd, formCmd)
 
 }
 func (m ProjectsView) View() string {
-	v := m.list.View()
-	return v
+	layers := []*lipgloss.Layer{
+		lipgloss.NewLayer(m.list.View()),
+	}
+
+	if m.creationForm != nil {
+		vw := m.list.Width()
+		vh := m.list.Height()
+
+		view := formStyle.Render(m.creationForm.View())
+		fw := lipgloss.Width(view)
+		fh := lipgloss.Height(view)
+
+		layers = append(layers, lipgloss.NewLayer(view).X((vw-fw)/2).Y((vh-fh)/2).Z(1))
+	}
+
+	return lipgloss.NewCompositor(layers...).Render()
 }
