@@ -1,0 +1,31 @@
+[ssh]
+host = "0.0.0.0"
+port = "2222"
+
+# Your company's logo is displayed as: [<logo>] <name>, with logo having 
+# We suggest using a nerd font character for the logo.
+[company]
+name = "pausetta.org"
+logo = ""
+logo_bg = "#AA89E1"
+logo_fg = "#FFFFFF"
+hide = false # if you don't like having the logo in the statusbar, just set this to true
+
+# Groups that are added by default when creating a new project
+[[default_groups]]
+name = "admins"
+color = "#AA89E1"
+mentionable = false
+permissions = ["write-issues", "read-issues", "edit-project", "delete-project"]
+add_creator = true # if true, the creator of the project will be automatically added to this group.
+                   # at least one group has to have this, or else the creator won't be a member of the project.
+
+[[default_groups]]
+name = "devs"
+mentionable = false
+permissions = ["write-issues", "read-issues"]
+
+[[default_groups]]
+name = "guests"
+mentionable = false
+permissions = ["read-issues"]

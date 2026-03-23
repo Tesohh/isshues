@@ -18,6 +18,7 @@ import (
 	"github.com/charmbracelet/ssh"
 	"github.com/jackc/pgx/v5"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
 // App contains a wish server and the list of running programs.
@@ -26,7 +27,8 @@ type App struct {
 	host string
 	port string
 
-	DB *db.Queries
+	Viper *viper.Viper
+	DB    *db.Queries
 
 	SessionIdToUserIds map[string]int64
 
@@ -47,16 +49,17 @@ func (a *App) Broadcast(msg tea.Msg) {
 
 type isshuesCmd func(session ssh.Session, app *App, progPtr **tea.Program) *cobra.Command
 
-func NewApp(host, port string, dbConn *pgx.Conn, rootCmd isshuesCmd) *App {
+func NewApp(dbConn *pgx.Conn, viper *viper.Viper, rootCmd isshuesCmd) *App {
 	a := new(App)
-	a.host = host
-	a.port = port
 	a.SessionIdToUserIds = make(map[string]int64)
 
+	a.Viper = viper
+	a.host = viper.GetString("ssh.host")
+	a.port = viper.GetString("ssh.port")
 	a.DB = db.New(dbConn)
 
 	s, err := wish.NewServer(
-		wish.WithAddress(net.JoinHostPort(host, port)),
+		wish.WithAddress(net.JoinHostPort(a.host, a.port)),
 		wish.WithHostKeyPath(".ssh/id_ed25519"),
 		wish.WithPublicKeyAuth(func(ctx ssh.Context, key ssh.PublicKey) bool {
 			return key.Type() == "ssh-ed25519"
