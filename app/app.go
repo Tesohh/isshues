@@ -107,6 +107,8 @@ func (a *App) MakeProgramHandler(rootCmd isshuesCmd) func(session ssh.Session) *
 
 		session.PublicKey()
 
+		wish.Println(session)
+
 		rootCmd := rootCmd(session, a, &prog)
 		rootCmd.SetArgs(session.Command())
 		rootCmd.SetIn(session)
