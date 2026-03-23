@@ -36,6 +36,7 @@ func (m ProjectsView) MakeCreateProjectCmd(title, prefix string) func() tea.Msg 
 		_ = action.CreateProject(m.app, m.userId, title, prefix)
 		// TODO: handle error
 
-		return RefreshProjectsMsg{}
+		m.app.Broadcast(RefreshProjectsMsg{})
+		return nil
 	}
 }
