@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	"github.com/Tesohh/isshues/cli"
+	"github.com/Tesohh/isshues/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/jackc/pgx/v5"
 	_ "github.com/joho/godotenv/autoload"
@@ -26,8 +26,9 @@ func main() {
 	viper.AddConfigPath("$XDG_CONFIG_HOME/isshues")
 	viper.AddConfigPath("$HOME/.config/isshues")
 	viper.AddConfigPath(".")
+	viper.AddConfigPath("./.ignored/config") // for development purposes
 
-	default_config(viper)
+	config.ApplyDefaultConfig(viper)
 
 	err = viper.ReadInConfig()
 
@@ -41,7 +42,7 @@ func main() {
 	}
 
 	viper.OnConfigChange(func(e fsnotify.Event) {
-		fmt.Println("Config file changed:", e.Name)
+		log.Info("Config file changed:", "filename", e.Name)
 	})
 	viper.WatchConfig()
 

@@ -2,3 +2,4 @@
 .ssh
 .env
 db/generated/
+.ignored/

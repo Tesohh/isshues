@@ -1,12 +1,11 @@
-package main
+package config
 
 import (
-	"github.com/Tesohh/isshues/config"
 	"github.com/spf13/viper"
 )
 
-func default_groups() []config.DefaultGroup {
-	return []config.DefaultGroup{
+func default_groups() []DefaultGroup {
+	return []DefaultGroup{
 		{
 			Name:        "admins",
 			Color:       "#AA89E1",
@@ -29,7 +28,7 @@ func default_groups() []config.DefaultGroup {
 	}
 }
 
-func default_config(viper *viper.Viper) {
+func ApplyDefaultConfig(viper *viper.Viper) {
 	viper.SetDefault("ssh.host", "0.0.0.0")
 	viper.SetDefault("ssh.port", "2222")
 
