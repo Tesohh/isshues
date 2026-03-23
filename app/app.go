@@ -14,6 +14,7 @@ import (
 	"charm.land/wish/v2/activeterm"
 	"charm.land/wish/v2/bubbletea"
 	"charm.land/wish/v2/logging"
+	"github.com/Tesohh/isshues/config"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/charmbracelet/ssh"
 	"github.com/jackc/pgx/v5"
@@ -107,7 +108,7 @@ func (a *App) MakeProgramHandler(rootCmd isshuesCmd) func(session ssh.Session) *
 
 		session.PublicKey()
 
-		wish.Println(session)
+		wish.Println(session, config.MakeWaterMark(a.Viper))
 
 		rootCmd := rootCmd(session, a, &prog)
 		rootCmd.SetArgs(session.Command())
