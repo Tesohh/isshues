@@ -5,6 +5,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/log/v2"
+	"github.com/Tesohh/isshues/action"
 	db "github.com/Tesohh/isshues/db/generated"
 )
 
@@ -28,4 +29,13 @@ func (m ProjectsView) FetchProjectsCmd() tea.Msg {
 		return nil
 	}
 	return UpdateProjectsMsg{Projects: projects}
+}
+
+func (m ProjectsView) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
+	return func() tea.Msg {
+		_ = action.CreateProject(m.app, m.userId, title, prefix)
+		// TODO: handle error
+
+		return RefreshProjectsMsg{}
+	}
 }

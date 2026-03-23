@@ -2,6 +2,7 @@ package projects
 
 import (
 	"context"
+	"strings"
 
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
@@ -77,7 +78,11 @@ func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 
 		switch m.creationForm.State {
 		case huh.StateCompleted:
-			// TODO: send tea.Cmd
+			title := m.creationForm.GetString("title")
+			prefix := strings.ToUpper(m.creationForm.GetString("prefix"))
+
+			formCmd = m.MakeCreateProjectCmd(title, prefix)
+
 			m.creationForm = nil
 		case huh.StateAborted:
 			m.creationForm = nil

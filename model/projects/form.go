@@ -23,7 +23,7 @@ func MakeForm() *huh.Form {
 
 	return huh.NewForm(
 		huh.NewGroup(
-			huh.NewInput().Key("name").Title("Project name"),
+			huh.NewInput().Key("title").Title("Project title"),
 			huh.NewInput().Key("prefix").Title("Project prefix").Validate(prefixValidator),
 			huh.NewConfirm().Key("confirm").Affirmative("Create").Negative(""),
 		),
