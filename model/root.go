@@ -16,10 +16,12 @@ type Status interface {
 type ViewingProjects struct{}
 
 type RootModel struct {
-	App          *app.App
-	StatusStack  []Status
+	App         *app.App
+	StatusStack []Status
+
 	ProjectsView projects.ProjectsView
-	UserId       int64
+
+	UserId int64
 }
 
 func NewRoot(app *app.App, userId int64) RootModel {

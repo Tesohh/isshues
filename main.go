@@ -10,13 +10,13 @@ import (
 	"github.com/Tesohh/isshues/cli"
 	"github.com/Tesohh/isshues/config"
 	"github.com/fsnotify/fsnotify"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/joho/godotenv/autoload"
 	viperlib "github.com/spf13/viper"
 )
 
 func main() {
-	conn, err := pgx.Connect(context.Background(), os.Getenv("DATABASE_URL"))
+	conn, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("cannot connect to database!", err)
 	}
