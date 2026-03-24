@@ -27,5 +27,5 @@ func MakeForm() *huh.Form {
 			huh.NewInput().Key("prefix").Title("Project prefix").Validate(prefixValidator),
 			huh.NewConfirm().Key("confirm").Affirmative("Create").Negative(""),
 		),
-	).WithKeyMap(keymap)
+	).WithKeyMap(keymap).WithShowHelp(false)
 }

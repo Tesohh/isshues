@@ -29,6 +29,7 @@ func New(userId int64, app *app.App) ProjectsView {
 	}
 
 	m.list.Title = "Projects"
+	m.list.SetShowHelp(false)
 
 	return m
 }
