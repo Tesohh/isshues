@@ -4,6 +4,7 @@ import (
 	"context"
 	"strings"
 
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
@@ -18,7 +19,8 @@ type ProjectsView struct {
 	list         list.Model
 	creationForm *huh.Form
 
-	showFullHelp bool
+	showFullHelp     bool
+	fullScreenHeight int
 
 	userId int64
 }
@@ -38,7 +40,7 @@ func New(userId int64, app *app.App) ProjectsView {
 }
 
 func (m ProjectsView) Init() tea.Cmd {
-	return m.FetchProjectsCmd
+	return tea.Batch(m.FetchProjectsCmd, m.HasCreatePermissionCmd)
 }
 
 func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
@@ -48,15 +50,25 @@ func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.list.SetSize(msg.Width, msg.Height)
+		m.fullScreenHeight = msg.Height
+
 	case RefreshProjectsMsg:
 		cmd = m.FetchProjectsCmd
+
 	case UpdateProjectsMsg:
 		m.list.SetItems(itemsFromProjects(msg.Projects))
+
+	case InitHasCreatePermissionMsg:
+		m.list.AdditionalShortHelpKeys = func() []key.Binding {
+			return []key.Binding{key.NewBinding(key.WithKeys("+"), key.WithHelp("+", "create project"))}
+		}
+
 	case tea.KeyPressMsg:
 		if msg.String() == "?" && m.creationForm == nil {
 			m.showFullHelp = !m.showFullHelp
 		} else if msg.String() == "+" && m.creationForm == nil {
 			ctx := context.Background()
+			// TODO: do this in a tea.Cmd
 			hasPermission, _ := m.app.DB.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
 				UserID:             m.userId,
 				GlobalPermissionID: "create-projects",
@@ -73,8 +85,16 @@ func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 		}
 	}
 
+	// set the correct height on the list
+	if m.ShowFullHelp() {
+		m.list.SetHeight(m.fullScreenHeight - len(m.FullHelp()))
+	} else {
+		m.list.SetHeight(m.fullScreenHeight)
+	}
+
 	var listCmd, formCmd tea.Cmd
 
+	// Handle form statuses
 	if m.creationForm != nil && !formIsNew {
 		var form huh.Model
 		form, formCmd = m.creationForm.Update(msg)
