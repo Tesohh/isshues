@@ -26,3 +26,11 @@ func (m ProjectsView) FullHelp() [][]key.Binding {
 		return [][]key.Binding{m.creationForm.KeyBinds()}
 	}
 }
+
+func (m ProjectsView) ShowFullHelp() bool {
+	if m.creationForm == nil {
+		return m.showFullHelp
+	} else {
+		return false
+	}
+}

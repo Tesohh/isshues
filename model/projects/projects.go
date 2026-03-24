@@ -13,19 +13,22 @@ import (
 )
 
 type ProjectsView struct {
-	list list.Model
-	app  *app.App
+	app *app.App
 
+	list         list.Model
 	creationForm *huh.Form
+
+	showFullHelp bool
 
 	userId int64
 }
 
 func New(userId int64, app *app.App) ProjectsView {
 	m := ProjectsView{
-		list:   list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
-		app:    app,
-		userId: userId,
+		list:         list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
+		app:          app,
+		showFullHelp: false,
+		userId:       userId,
 	}
 
 	m.list.Title = "Projects"
@@ -50,7 +53,9 @@ func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 	case UpdateProjectsMsg:
 		m.list.SetItems(itemsFromProjects(msg.Projects))
 	case tea.KeyPressMsg:
-		if msg.String() == "+" && m.creationForm == nil {
+		if msg.String() == "?" && m.creationForm == nil {
+			m.showFullHelp = !m.showFullHelp
+		} else if msg.String() == "+" && m.creationForm == nil {
 			ctx := context.Background()
 			hasPermission, _ := m.app.DB.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
 				UserID:             m.userId,

@@ -60,8 +60,14 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m RootModel) View() tea.View {
-	v := tea.NewView(m.ProjectsView.View() + m.HelpBar.ShortHelpView(m.ProjectsView.ShortHelp()))
-	// TODO: show the full help when needed
+	help := ""
+	if m.ProjectsView.ShowFullHelp() {
+		help = m.HelpBar.FullHelpView(m.ProjectsView.FullHelp())
+	} else {
+		help = m.HelpBar.ShortHelpView(m.ProjectsView.ShortHelp())
+	}
+
+	v := tea.NewView(m.ProjectsView.View() + help)
 
 	v.AltScreen = true
 	return v
