@@ -9,6 +9,7 @@ import (
 	"github.com/Tesohh/isshues/app"
 	"github.com/Tesohh/isshues/model/root"
 	"github.com/charmbracelet/ssh"
+	tint "github.com/lrstanley/bubbletint/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -22,7 +23,10 @@ func RootCmd(session ssh.Session, app *app.App, progPtr **tea.Program) *cobra.Co
 				return errors.New("your userid was not found in the session map. might be an auth issue.")
 			}
 
-			model := root.New(app, userId)
+			// TODO: don't hardcode this
+			theme, _ := tint.GetTint("rose_pine")
+
+			model := root.New(app, userId, theme)
 			model.App = app // each model gets a reference to the global App
 
 			*progPtr = tea.NewProgram(model, bubbletea.MakeOptions(session)...)

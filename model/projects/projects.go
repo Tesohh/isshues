@@ -11,10 +11,12 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
+	tint "github.com/lrstanley/bubbletint/v2"
 )
 
 type ProjectsView struct {
-	app *app.App
+	app   *app.App
+	theme *tint.Tint
 
 	list         list.Model
 	creationForm *huh.Form
@@ -25,17 +27,19 @@ type ProjectsView struct {
 	userId int64
 }
 
-func New(userId int64, app *app.App) ProjectsView {
+func New(userId int64, app *app.App, theme *tint.Tint) ProjectsView {
 	m := ProjectsView{
 		list:         list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
 		app:          app,
+		theme:        theme,
 		showFullHelp: false,
 		userId:       userId,
 	}
 
 	m.list.Title = "Projects"
 	m.list.SetShowHelp(false)
-
+	m.list.Styles.Title = m.list.Styles.Title.Background(m.theme.Purple)
+	// TODO: changing the list item styles theoretically needs the delegate
 	return m
 }
 

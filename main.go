@@ -12,6 +12,7 @@ import (
 	"github.com/fsnotify/fsnotify"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/joho/godotenv/autoload"
+	tint "github.com/lrstanley/bubbletint/v2"
 	viperlib "github.com/spf13/viper"
 )
 
@@ -45,6 +46,8 @@ func main() {
 		log.Info("Config file changed:", "filename", e.Name)
 	})
 	viper.WatchConfig()
+
+	tint.NewDefaultRegistry()
 
 	app := app.NewApp(conn, viper, cli.RootCmd)
 	app.Start()

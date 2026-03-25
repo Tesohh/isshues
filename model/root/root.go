@@ -5,6 +5,7 @@ import (
 	"github.com/Tesohh/isshues/app"
 	"github.com/Tesohh/isshues/model/projects"
 	"github.com/Tesohh/isshues/model/statusbar"
+	tint "github.com/lrstanley/bubbletint/v2"
 )
 
 // TODO: consider just moving the model here.
@@ -18,6 +19,7 @@ type ViewingProjects struct{}
 type RootModel struct {
 	App         *app.App
 	StatusStack []Status
+	Theme       *tint.Tint
 
 	ProjectsView projects.ProjectsView
 
@@ -26,12 +28,13 @@ type RootModel struct {
 	UserId int64
 }
 
-func New(app *app.App, userId int64) RootModel {
+func New(app *app.App, userId int64, theme *tint.Tint) RootModel {
 	return RootModel{
 		UserId:       userId,
-		ProjectsView: projects.New(userId, app),
+		ProjectsView: projects.New(userId, app, theme),
 		StatusBar:    statusbar.New(app),
 		StatusStack:  []Status{ViewingProjects{}},
+		Theme:        theme,
 	}
 }
 
@@ -72,5 +75,7 @@ func (m RootModel) View() tea.View {
 	v := tea.NewView(m.ProjectsView.View() + statusbar)
 
 	v.AltScreen = true
+	v.BackgroundColor = m.Theme.Bg
+
 	return v
 }
