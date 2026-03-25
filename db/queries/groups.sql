@@ -1,5 +1,5 @@
 -- name: InsertGroup :one
-INSERT INTO groups (name, color, mentionable, project_id)
+INSERT INTO groups (name, color_key, mentionable, project_id)
 VALUES ($1, $2, $3, $4)
 RETURNING groups.id;
 
