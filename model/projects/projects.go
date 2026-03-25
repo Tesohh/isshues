@@ -83,7 +83,7 @@ func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 				break
 			}
 
-			m.creationForm = MakeForm()
+			m.creationForm = MakeForm(m.theme)
 			cmd = m.creationForm.Init()
 			formIsNew = true
 		}
@@ -133,7 +133,8 @@ func (m ProjectsView) View() string {
 		vw := m.list.Width()
 		vh := m.list.Height()
 
-		view := formStyle.Render(m.creationForm.View())
+		// TODO: clean this up
+		view := formStyle.BorderForeground(lipgloss.Darken(m.theme.Fg, 0.5)).Render(m.creationForm.View())
 		fw := lipgloss.Width(view)
 		fh := lipgloss.Height(view)
 
