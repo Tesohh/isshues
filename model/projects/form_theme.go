@@ -25,6 +25,8 @@ func (d dynamicFormTheme) Theme(isDark bool) *huh.Styles {
 		lessMuted = lipgloss.Darken(d.Fg, 0.3)
 	)
 
+	t.Form.Base = t.Form.Base.Foreground(normalFg)
+
 	t.Focused.Base = t.Focused.Base.BorderForeground(muted)
 	t.Focused.Card = t.Focused.Base
 	t.Focused.Title = t.Focused.Title.Foreground(indigo).Bold(true)
