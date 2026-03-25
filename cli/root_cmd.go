@@ -7,7 +7,7 @@ import (
 	"charm.land/log/v2"
 	"charm.land/wish/v2/bubbletea"
 	"github.com/Tesohh/isshues/app"
-	"github.com/Tesohh/isshues/model"
+	"github.com/Tesohh/isshues/model/root"
 	"github.com/charmbracelet/ssh"
 	"github.com/spf13/cobra"
 )
@@ -22,7 +22,7 @@ func RootCmd(session ssh.Session, app *app.App, progPtr **tea.Program) *cobra.Co
 				return errors.New("your userid was not found in the session map. might be an auth issue.")
 			}
 
-			model := model.NewRoot(app, userId)
+			model := root.New(app, userId)
 			model.App = app // each model gets a reference to the global App
 
 			*progPtr = tea.NewProgram(model, bubbletea.MakeOptions(session)...)

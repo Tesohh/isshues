@@ -1,10 +1,10 @@
-package model
+package root
 
 import (
-	"charm.land/bubbles/v2/help"
 	tea "charm.land/bubbletea/v2"
 	"github.com/Tesohh/isshues/app"
 	"github.com/Tesohh/isshues/model/projects"
+	"github.com/Tesohh/isshues/model/statusbar"
 )
 
 // TODO: consider just moving the model here.
@@ -21,22 +21,22 @@ type RootModel struct {
 
 	ProjectsView projects.ProjectsView
 
-	HelpBar help.Model
+	StatusBar statusbar.Model
 
 	UserId int64
 }
 
-func NewRoot(app *app.App, userId int64) RootModel {
+func New(app *app.App, userId int64) RootModel {
 	return RootModel{
 		UserId:       userId,
 		ProjectsView: projects.New(userId, app),
-		HelpBar:      help.New(),
+		StatusBar:    statusbar.New(app),
 		StatusStack:  []Status{ViewingProjects{}},
 	}
 }
 
 func (m RootModel) Init() tea.Cmd {
-	return tea.Batch(m.ProjectsView.Init())
+	return tea.Batch(m.ProjectsView.Init(), m.StatusBar.Init())
 }
 
 func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -45,6 +45,10 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if key, ok := msg.(tea.KeyPressMsg); ok && key.String() == "ctrl+c" {
 		return m, tea.Quit
 	}
+
+	var statusBarCmd tea.Cmd
+	m.StatusBar, statusBarCmd = m.StatusBar.Update(msg)
+	cmds = append(cmds, statusBarCmd)
 
 	switch msg := msg.(type) {
 	default:
@@ -56,18 +60,16 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		}
 	}
+
 	return m, tea.Batch(cmds...)
 }
 
 func (m RootModel) View() tea.View {
-	help := ""
-	if m.ProjectsView.ShowFullHelp() {
-		help = m.HelpBar.FullHelpView(m.ProjectsView.FullHelp())
-	} else {
-		help = m.HelpBar.ShortHelpView(m.ProjectsView.ShortHelp())
-	}
+	statusbar := m.StatusBar.View(m.ProjectsView)
 
-	v := tea.NewView(m.ProjectsView.View() + help)
+	// statusbar = m.StatusBar.HelpBar.ShortHelpView(m.ProjectsView.ShortHelp())
+
+	v := tea.NewView(m.ProjectsView.View() + statusbar)
 
 	v.AltScreen = true
 	return v

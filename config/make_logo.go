@@ -21,3 +21,8 @@ func MakeWaterMark(viper *viper.Viper) string {
 	logo := MakeLogo(viper)
 	return fmt.Sprintf("%s %s", logo, viper.GetString("company.name"))
 }
+
+func MakeWaterMarkReverse(viper *viper.Viper) string {
+	logo := MakeLogo(viper)
+	return fmt.Sprintf("%s %s", viper.GetString("company.name"), logo)
+}
