@@ -13,7 +13,7 @@ type item struct {
 
 func itemFromProject(p db.Project) item {
 	return item{
-		title: fmt.Sprintf("#%s %s", p.Prefix, p.Title),
+		title: fmt.Sprintf("[#%s] %s", p.Prefix, p.Title),
 		desc:  "TODO!",
 	}
 }

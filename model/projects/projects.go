@@ -29,7 +29,7 @@ type ProjectsView struct {
 
 func New(userId int64, app *app.App, theme *tint.Tint) ProjectsView {
 	m := ProjectsView{
-		list:         list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
+		list:         list.New([]list.Item{}, itemDelegate{theme}, 0, 0),
 		app:          app,
 		theme:        theme,
 		showFullHelp: false,
