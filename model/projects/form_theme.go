@@ -15,48 +15,48 @@ func (d dynamicFormTheme) Theme(isDark bool) *huh.Styles {
 	t := huh.ThemeBase(isDark)
 
 	var (
-		normalFg  = d.Fg
-		indigo    = d.Purple
-		fuchsia   = d.Blue
-		green     = d.Green
-		red       = d.Red
-		cyan      = d.Cyan
-		muted     = lipgloss.Darken(d.Fg, 0.5)
-		lessMuted = lipgloss.Darken(d.Fg, 0.3)
+		base     = d.Bg
+		text     = d.Fg
+		subtext1 = lipgloss.Darken(d.Fg, 0.6)
+		subtext0 = lipgloss.Darken(d.Fg, 0.4)
+		// overlay1 = lipgloss.Darken(d.Fg, 0.3)
+		overlay0 = lipgloss.Darken(d.Fg, 0.2)
+		green    = d.Green
+		red      = d.Red
+		pink     = d.Purple
+		mauve    = d.Blue
+		cursor   = lipgloss.Darken(d.Fg, 0.6)
 	)
 
-	t.Form.Base = t.Form.Base.Foreground(normalFg)
-
-	t.Focused.Base = t.Focused.Base.BorderForeground(muted)
+	t.Focused.Base = t.Focused.Base.BorderForeground(subtext1)
 	t.Focused.Card = t.Focused.Base
-	t.Focused.Title = t.Focused.Title.Foreground(indigo).Bold(true)
-	t.Focused.NoteTitle = t.Focused.NoteTitle.Foreground(indigo).Bold(true).MarginBottom(1)
-	t.Focused.Directory = t.Focused.Directory.Foreground(indigo)
-	t.Focused.Description = t.Focused.Description.Foreground(lessMuted)
+	t.Focused.Title = t.Focused.Title.Foreground(mauve)
+	t.Focused.NoteTitle = t.Focused.NoteTitle.Foreground(mauve)
+	t.Focused.Directory = t.Focused.Directory.Foreground(mauve)
+	t.Focused.Description = t.Focused.Description.Foreground(subtext0)
 	t.Focused.ErrorIndicator = t.Focused.ErrorIndicator.Foreground(red)
 	t.Focused.ErrorMessage = t.Focused.ErrorMessage.Foreground(red)
-	t.Focused.SelectSelector = t.Focused.SelectSelector.Foreground(fuchsia)
-	t.Focused.NextIndicator = t.Focused.NextIndicator.Foreground(fuchsia)
-	t.Focused.PrevIndicator = t.Focused.PrevIndicator.Foreground(fuchsia)
-	t.Focused.Option = t.Focused.Option.Foreground(normalFg)
-	t.Focused.MultiSelectSelector = t.Focused.MultiSelectSelector.Foreground(fuchsia)
+	t.Focused.SelectSelector = t.Focused.SelectSelector.Foreground(pink)
+	t.Focused.NextIndicator = t.Focused.NextIndicator.Foreground(pink)
+	t.Focused.PrevIndicator = t.Focused.PrevIndicator.Foreground(pink)
+	t.Focused.Option = t.Focused.Option.Foreground(text)
+	t.Focused.MultiSelectSelector = t.Focused.MultiSelectSelector.Foreground(pink)
 	t.Focused.SelectedOption = t.Focused.SelectedOption.Foreground(green)
-	t.Focused.SelectedPrefix = lipgloss.NewStyle().Foreground(cyan).SetString("✓ ")
-	t.Focused.UnselectedPrefix = lipgloss.NewStyle().Foreground(lessMuted).SetString("• ")
-	t.Focused.UnselectedOption = t.Focused.UnselectedOption.Foreground(normalFg)
-	t.Focused.FocusedButton = t.Focused.FocusedButton.Foreground(normalFg).Background(fuchsia)
-	t.Focused.Next = t.Focused.FocusedButton
-	t.Focused.BlurredButton = t.Focused.BlurredButton.Foreground(normalFg).Background(lessMuted)
+	t.Focused.SelectedPrefix = t.Focused.SelectedPrefix.Foreground(green)
+	t.Focused.UnselectedPrefix = t.Focused.UnselectedPrefix.Foreground(text)
+	t.Focused.UnselectedOption = t.Focused.UnselectedOption.Foreground(text)
+	t.Focused.FocusedButton = t.Focused.FocusedButton.Foreground(base).Background(pink)
+	t.Focused.BlurredButton = t.Focused.BlurredButton.Foreground(text).Background(base)
 
-	t.Focused.TextInput.Cursor = t.Focused.TextInput.Cursor.Foreground(green)
-	t.Focused.TextInput.Placeholder = t.Focused.TextInput.Placeholder.Foreground(muted)
-	t.Focused.TextInput.Prompt = t.Focused.TextInput.Prompt.Foreground(fuchsia)
+	t.Focused.TextInput.Cursor = t.Focused.TextInput.Cursor.Foreground(cursor)
+	t.Focused.TextInput.Placeholder = t.Focused.TextInput.Placeholder.Foreground(overlay0)
+	t.Focused.TextInput.Prompt = t.Focused.TextInput.Prompt.Foreground(pink)
+	t.Focused.TextInput.Text = t.Focused.TextInput.Text.Foreground(text)
 
 	t.Blurred = t.Focused
-	t.Blurred.Base = t.Focused.Base.BorderStyle(lipgloss.HiddenBorder())
+	t.Blurred.TextInput.Text = t.Blurred.TextInput.Text.Foreground(text)
+	t.Blurred.Base = t.Blurred.Base.BorderStyle(lipgloss.HiddenBorder())
 	t.Blurred.Card = t.Blurred.Base
-	t.Blurred.NextIndicator = lipgloss.NewStyle()
-	t.Blurred.PrevIndicator = lipgloss.NewStyle()
 
 	t.Group.Title = t.Focused.Title
 	t.Group.Description = t.Focused.Description

@@ -24,7 +24,7 @@ func RootCmd(session ssh.Session, app *app.App, progPtr **tea.Program) *cobra.Co
 			}
 
 			// TODO: don't hardcode this
-			theme, _ := tint.GetTint("rose_pine")
+			theme, _ := tint.GetTint("gruvbox_dark")
 
 			model := root.New(app, userId, theme)
 			model.App = app // each model gets a reference to the global App
