@@ -32,7 +32,7 @@ func New(app *app.App, userId int64, theme *tint.Tint) RootModel {
 	return RootModel{
 		UserId:       userId,
 		ProjectsView: projects.New(userId, app, theme),
-		StatusBar:    statusbar.New(app),
+		StatusBar:    statusbar.New(app, theme),
 		StatusStack:  []Status{ViewingProjects{}},
 		Theme:        theme,
 	}
