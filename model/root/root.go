@@ -25,7 +25,7 @@ type Model struct {
 	StatusStack []Status
 	Theme       *tint.Tint
 
-	ProjectsView projects.ProjectsView
+	ProjectsView projects.Model
 
 	StatusBar statusbar.Model
 

@@ -15,7 +15,7 @@ import (
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
-type ProjectsView struct {
+type Model struct {
 	app   *app.App
 	theme *tint.Tint
 
@@ -28,8 +28,8 @@ type ProjectsView struct {
 	userId int64
 }
 
-func New(userId int64, app *app.App, theme *tint.Tint) ProjectsView {
-	m := ProjectsView{
+func New(userId int64, app *app.App, theme *tint.Tint) Model {
+	m := Model{
 		list:         list.New([]list.Item{}, itemDelegate{theme}, 0, 0),
 		app:          app,
 		theme:        theme,
@@ -44,11 +44,11 @@ func New(userId int64, app *app.App, theme *tint.Tint) ProjectsView {
 	return m
 }
 
-func (m ProjectsView) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return tea.Batch(m.FetchProjectsCmd, m.HasCreatePermissionCmd)
 }
 
-func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	var cmd tea.Cmd
 	var formIsNew bool
 
@@ -130,7 +130,7 @@ func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 	return m, tea.Batch(cmd, listCmd, formCmd)
 
 }
-func (m ProjectsView) View() string {
+func (m Model) View() string {
 	layers := []*lipgloss.Layer{
 		lipgloss.NewLayer(m.list.View()),
 	}

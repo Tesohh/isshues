@@ -19,7 +19,7 @@ type UpdateProjectsMsg struct {
 
 type InitHasCreatePermissionMsg struct{}
 
-func (m ProjectsView) FetchProjectsCmd() tea.Msg {
+func (m Model) FetchProjectsCmd() tea.Msg {
 	log.Info("Fetching projects")
 
 	ctx := context.Background()
@@ -33,7 +33,7 @@ func (m ProjectsView) FetchProjectsCmd() tea.Msg {
 	return UpdateProjectsMsg{Projects: projects}
 }
 
-func (m ProjectsView) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
+func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 	return func() tea.Msg {
 		_ = action.CreateProject(m.app, m.userId, title, prefix)
 		// TODO: handle error
@@ -43,7 +43,7 @@ func (m ProjectsView) MakeCreateProjectCmd(title, prefix string) func() tea.Msg 
 	}
 }
 
-func (m ProjectsView) HasCreatePermissionCmd() tea.Msg {
+func (m Model) HasCreatePermissionCmd() tea.Msg {
 	ctx := context.Background()
 	hasPermission, _ := m.app.DB.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
 		UserID:             m.userId,
