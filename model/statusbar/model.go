@@ -22,29 +22,39 @@ type Model struct {
 
 func New(app *app.App, theme *tint.Tint) Model {
 	help := help.New()
-	help.Styles.ShortKey = help.Styles.ShortKey.Foreground(lipgloss.Darken(theme.Fg, 0.3))
-	help.Styles.ShortDesc = help.Styles.ShortDesc.Foreground(lipgloss.Darken(theme.Fg, 0.5))
-	help.Styles.ShortSeparator = help.Styles.ShortSeparator.Foreground(lipgloss.Darken(theme.Fg, 0.5))
-	help.Styles.FullKey = help.Styles.ShortKey.Foreground(lipgloss.Darken(theme.Fg, 0.3))
-	help.Styles.FullDesc = help.Styles.ShortDesc.Foreground(lipgloss.Darken(theme.Fg, 0.5))
-	help.Styles.FullSeparator = help.Styles.FullSeparator.Foreground(lipgloss.Darken(theme.Fg, 0.5))
 
-	return Model{
+	m := Model{
 		App:     app,
 		Theme:   theme,
 		Width:   0,
 		HelpBar: help,
 	}
+
+	m = m.refreshTheme()
+	return m
 }
 
 func (m Model) Init() tea.Cmd {
 	return nil
 }
 
+func (m Model) refreshTheme() Model {
+	m.HelpBar.Styles.ShortKey = m.HelpBar.Styles.ShortKey.Foreground(lipgloss.Darken(m.Theme.Fg, 0.3))
+	m.HelpBar.Styles.ShortDesc = m.HelpBar.Styles.ShortDesc.Foreground(lipgloss.Darken(m.Theme.Fg, 0.5))
+	m.HelpBar.Styles.ShortSeparator = m.HelpBar.Styles.ShortSeparator.Foreground(lipgloss.Darken(m.Theme.Fg, 0.5))
+	m.HelpBar.Styles.FullKey = m.HelpBar.Styles.ShortKey.Foreground(lipgloss.Darken(m.Theme.Fg, 0.3))
+	m.HelpBar.Styles.FullDesc = m.HelpBar.Styles.ShortDesc.Foreground(lipgloss.Darken(m.Theme.Fg, 0.5))
+	m.HelpBar.Styles.FullSeparator = m.HelpBar.Styles.FullSeparator.Foreground(lipgloss.Darken(m.Theme.Fg, 0.5))
+	return m
+}
+
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
+	case model.ThemeChangedMsg:
+		m.Theme = msg.NewTheme
+		m = m.refreshTheme()
 	}
 	return m, nil
 }

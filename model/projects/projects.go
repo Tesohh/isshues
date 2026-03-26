@@ -11,6 +11,7 @@ import (
 	"charm.land/lipgloss/v2"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
+	"github.com/Tesohh/isshues/model"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -55,6 +56,11 @@ func (m ProjectsView) Update(msg tea.Msg) (ProjectsView, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.list.SetSize(msg.Width, msg.Height)
 		m.fullScreenHeight = msg.Height
+
+	case model.ThemeChangedMsg:
+		m.theme = msg.NewTheme
+		m.list.SetDelegate(itemDelegate{m.theme})
+		m.list.Styles.Title = m.list.Styles.Title.Background(m.theme.Purple)
 
 	case RefreshProjectsMsg:
 		cmd = m.FetchProjectsCmd
