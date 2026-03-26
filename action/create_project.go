@@ -40,7 +40,7 @@ func CreateProject(app *app.App, userId int64, title string, prefix string) erro
 	for _, group := range defaultGroups {
 		params := db.InsertGroupParams{
 			Name:        pgtype.Text{String: group.Name, Valid: true},
-			Color:       pgtype.Text{String: group.Color, Valid: group.Color != ""},
+			ColorKey:    pgtype.Text{String: group.Color, Valid: group.Color != ""},
 			Mentionable: group.Mentionable,
 			ProjectID:   projectId,
 		}

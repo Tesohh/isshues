@@ -37,3 +37,6 @@ SELECT EXISTS (
     AND g.project_id = $2
 );
 
+-- name: GetUserSettings :one
+SELECT * FROM user_settings
+WHERE user_id = $1;
