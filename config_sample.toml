@@ -7,14 +7,14 @@ port = "2222"
 [company]
 name = "pausetta.org"
 logo = ""
-logo_bg = "#AA89E1"
-logo_fg = "#FFFFFF"
+logo_bg = "purple" 
+logo_fg = "fg" 
 hide = false # if you don't like having the logo in the statusbar, just set this to true
 
 # Groups that are added by default when creating a new project
 [[default_groups]]
 name = "admins"
-color = "#AA89E1"
+color = "red"
 mentionable = false
 permissions = ["write-issues", "read-issues", "edit-project", "delete-project"]
 add_creator = true # if true, the creator of the project will be automatically added to this group.

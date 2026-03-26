@@ -50,7 +50,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) bottomRight() string {
-	return config.MakeWaterMarkReverse(m.App.Viper) + " "
+	return config.MakeWaterMarkReverse(m.App.Viper, m.Theme) + " "
 }
 
 func (m Model) View(currentModel model.Helper) string {

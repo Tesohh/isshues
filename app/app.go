@@ -17,7 +17,6 @@ import (
 	"charm.land/wish/v2/bubbletea"
 	"charm.land/wish/v2/logging"
 	"github.com/Tesohh/isshues/common"
-	"github.com/Tesohh/isshues/config"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/charmbracelet/ssh"
 	"github.com/spf13/cobra"
@@ -113,7 +112,7 @@ func (a *App) MakeProgramHandler(rootCmd isshuesCmd) func(session ssh.Session) *
 		versionText := fmt.Sprintf("(isshues version %s)", common.GetVersion())
 		versionText = lipgloss.NewStyle().Foreground(lipgloss.Darken(lipgloss.White, 0.3)).Render(versionText)
 
-		wish.Printf(session, "%s %s\n", config.MakeWaterMark(a.Viper), versionText)
+		// wish.Printf(session, "%s %s\n", config.MakeWaterMark(a.Viper, ), versionText)
 
 		rootCmd := rootCmd(session, a, &prog)
 		rootCmd.SetArgs(session.Command())

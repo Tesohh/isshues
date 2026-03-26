@@ -8,7 +8,7 @@ func default_groups() []DefaultGroup {
 	return []DefaultGroup{
 		{
 			Name:        "admins",
-			Color:       "#AA89E1",
+			Color:       "red",
 			Mentionable: false,
 			AddCreator:  true,
 			Permissions: []string{"write-issues", "read-issues", "edit-project", "delete-project"},
@@ -34,8 +34,8 @@ func ApplyDefaultConfig(viper *viper.Viper) {
 
 	viper.SetDefault("company.name", "pausetta.org")
 	viper.SetDefault("company.logo", "")
-	viper.SetDefault("company.logo_bg", "#AA89E1")
-	viper.SetDefault("company.logo_fg", "#FFFFFF")
+	viper.SetDefault("company.logo_bg", "purple")
+	viper.SetDefault("company.logo_fg", "bg")
 	viper.SetDefault("company.hide", false)
 
 	viper.SetDefault("default_groups", default_groups())
