@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const DefaultTheme = "builtin_pastel_dark"
+const DefaultTheme = "git_hub_dark"
 
 func (a *App) AuthMiddleware(next ssh.Handler) ssh.Handler {
 	return func(s ssh.Session) {
