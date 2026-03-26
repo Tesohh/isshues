@@ -20,7 +20,7 @@ type Status interface {
 
 type ViewingProjects struct{}
 
-type RootModel struct {
+type Model struct {
 	App         *app.App
 	StatusStack []Status
 	Theme       *tint.Tint
@@ -32,8 +32,8 @@ type RootModel struct {
 	UserId int64
 }
 
-func New(app *app.App, userId int64, theme *tint.Tint) RootModel {
-	return RootModel{
+func New(app *app.App, userId int64, theme *tint.Tint) Model {
+	return Model{
 		UserId:       userId,
 		ProjectsView: projects.New(userId, app, theme),
 		StatusBar:    statusbar.New(app, theme),
@@ -42,18 +42,18 @@ func New(app *app.App, userId int64, theme *tint.Tint) RootModel {
 	}
 }
 
-func (m RootModel) testChangeTHeme() tea.Msg {
+func (m Model) testChangeTHeme() tea.Msg {
 	time.Sleep(5 * time.Second)
 	log.Info("changed theme")
 	theme, _ := tint.GetTint("gruvbox_dark")
 	return model.ThemeChangedMsg{NewTheme: theme}
 }
 
-func (m RootModel) Init() tea.Cmd {
+func (m Model) Init() tea.Cmd {
 	return tea.Batch(m.ProjectsView.Init(), m.StatusBar.Init(), m.testChangeTHeme)
 }
 
-func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	cmds := []tea.Cmd{}
 
 	if key, ok := msg.(tea.KeyPressMsg); ok && key.String() == "ctrl+c" {
@@ -89,7 +89,7 @@ func (m RootModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tea.Batch(cmds...)
 }
 
-func (m RootModel) View() tea.View {
+func (m Model) View() tea.View {
 	statusbar := m.StatusBar.View(m.ProjectsView)
 
 	// statusbar = m.StatusBar.HelpBar.ShortHelpView(m.ProjectsView.ShortHelp())
