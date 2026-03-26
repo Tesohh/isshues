@@ -50,7 +50,7 @@ func (m Model) testChangeTHeme() tea.Msg {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.ProjectsView.Init(), m.StatusBar.Init(), m.testChangeTHeme)
+	return tea.Batch(m.ProjectsView.Init(), m.StatusBar.Init()) //, m.testChangeTHeme)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
