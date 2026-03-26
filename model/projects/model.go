@@ -2,6 +2,7 @@ package projects
 
 import (
 	"context"
+	"errors"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -14,6 +15,8 @@ import (
 	"github.com/Tesohh/isshues/model"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
+
+var NotAuthorizedCreateErr = errors.New("missing create-projects global permission!")
 
 type Model struct {
 	app   *app.App
@@ -40,7 +43,6 @@ func New(userId int64, app *app.App, theme *tint.Tint) Model {
 	m.list.Title = "Projects"
 	m.list.SetShowHelp(false)
 	m.list.Styles.Title = m.list.Styles.Title.Background(m.theme.Purple)
-	// TODO: changing the list item styles theoretically needs the delegate
 	return m
 }
 
@@ -79,13 +81,18 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		} else if msg.String() == "+" && m.creationForm == nil {
 			ctx := context.Background()
 			// TODO: do this in a tea.Cmd
-			hasPermission, _ := m.app.DB.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
+			hasPermission, err := m.app.DB.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
 				UserID:             m.userId,
 				GlobalPermissionID: "create-projects",
 			})
-			// TODO: handle error
+
+			if err != nil {
+				cmd = model.MakeErrCmd(err)
+				break
+			}
 
 			if !hasPermission {
+				cmd = model.MakeErrCmd(NotAuthorizedCreateErr)
 				break
 			}
 

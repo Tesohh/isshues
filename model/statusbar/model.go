@@ -17,6 +17,7 @@ type Model struct {
 	Theme *tint.Tint
 
 	Width   int
+	err     error
 	HelpBar help.Model
 }
 
@@ -27,6 +28,7 @@ func New(app *app.App, theme *tint.Tint) Model {
 		App:     app,
 		Theme:   theme,
 		Width:   0,
+		err:     nil,
 		HelpBar: help,
 	}
 
@@ -49,14 +51,23 @@ func (m Model) refreshTheme() Model {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.Width = msg.Width
+
 	case model.ThemeChangedMsg:
 		m.Theme = msg.NewTheme
 		m = m.refreshTheme()
+
+	case model.ErrMsg:
+		m.err = msg.Err
+		cmd = errResetCmd
+
+	case errResetMsg:
+		m.err = nil
 	}
-	return m, nil
+	return m, cmd
 }
 
 func (m Model) bottomRight() string {
@@ -69,16 +80,20 @@ func (m Model) View(currentModel model.Helper) string {
 
 	m.HelpBar.SetWidth(m.Width - bottomRightWidth)
 
-	help := ""
+	var help string
 
-	if currentModel.ShowFullHelp() {
-		help = m.HelpBar.FullHelpView(currentModel.FullHelp())
+	if m.err == nil {
+		if currentModel.ShowFullHelp() {
+			help = m.HelpBar.FullHelpView(currentModel.FullHelp())
+		} else {
+			help = m.HelpBar.ShortHelpView(currentModel.ShortHelp())
+		}
+
 	} else {
-		help = m.HelpBar.ShortHelpView(currentModel.ShortHelp())
+		help = lipgloss.NewStyle().Foreground(m.Theme.Red).Render(m.err.Error())
 	}
 
 	helpWidth := lipgloss.Width(help)
-
 	whitespaceWidth := max(m.Width-helpWidth-bottomRightWidth, 0)
 	whitespace := strings.Repeat(" ", whitespaceWidth)
 

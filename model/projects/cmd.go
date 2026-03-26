@@ -7,6 +7,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/action"
 	db "github.com/Tesohh/isshues/db/generated"
+	"github.com/Tesohh/isshues/model"
 )
 
 // Ask the projects view to refetch projects
@@ -35,11 +36,13 @@ func (m Model) FetchProjectsCmd() tea.Msg {
 
 func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 	return func() tea.Msg {
-		_ = action.CreateProject(m.app, m.userId, title, prefix)
-		// TODO: handle error
-
-		m.app.Broadcast(RefreshProjectsMsg{})
-		return nil
+		err := action.CreateProject(m.app, m.userId, title, prefix)
+		if err != nil {
+			return model.ErrMsg{Err: err}
+		} else {
+			m.app.Broadcast(RefreshProjectsMsg{})
+			return nil
+		}
 	}
 }
 
