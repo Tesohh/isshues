@@ -11,6 +11,10 @@ SELECT EXISTS (
 -- name: InsertUser :one
 INSERT INTO users (username) VALUES ($1)
 RETURNING id;
+
+-- name: InsertUserSettings :one
+INSERT INTO user_settings (user_id, theme) VALUES ($1, $2)
+RETURNING user_id;
  
 -- name: UserHasProjectPermission :one
 SELECT EXISTS (

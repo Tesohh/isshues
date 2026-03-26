@@ -12,6 +12,8 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+const DefaultTheme = "builtin_pastel_dark"
+
 func (a *App) AuthMiddleware(next ssh.Handler) ssh.Handler {
 	return func(s ssh.Session) {
 		sum := sha256.Sum256(s.PublicKey().Marshal())
@@ -47,6 +49,16 @@ func (a *App) AuthMiddleware(next ssh.Handler) ssh.Handler {
 			userId, err = a.DB.InsertUser(ctx, s.User())
 			if err != nil {
 				log.Error("user creation error", "username", s.User(), "err", err)
+				wish.Println(s, "There has been an error in creating your user.")
+				return
+			}
+
+			_, err = a.DB.InsertUserSettings(ctx, db.InsertUserSettingsParams{
+				UserID: userId,
+				Theme:  DefaultTheme,
+			})
+			if err != nil {
+				log.Error("user settings creation err", "username", s.User(), "err", err)
 				wish.Println(s, "There has been an error in creating your user.")
 				return
 			}
