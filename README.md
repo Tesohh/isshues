@@ -1,6 +1,50 @@
 # isshues
 TUI/CLI Project manager for small teams over SSH
 
+## Shorthand syntax
+Definitions:
+- Component: something preceded by a special symbol that will apply a label, dependency etc.
+
+### Example
+Say we want to create some issues in the project `OCVV` (Open ClasseViva).
+
+This shorthand
+```
+- +feat !crit +frontend add Nuke
+```
+Will create an issue with:
+- the labels `+feat` and `+frontend`
+- the `!crit` priority
+- since no assignees were specified, it will be automatically assigned to the creator (you)
+
+This shorthand
+```
+- +feat +gfx add Nuke 3D graphics @lallos >1 !low
+```
+Will create an issue with:
+- the labels `+feat` and `+gfx`
+- the `!low` priority
+- assigned to user `@lallos`
+- depends on the issue `#OCVV-1` (which is "add Nuke").
+Notice how the order of the components does not matter.
+
+This shorthand
+```
+- +idea consider adding nuke 4D graphics @quantum-team >2
+```
+Will create an issue with:
+- the labels `+idea`
+- assigned to the group `@quantum-team`
+- depends on the issue `#OCVV-2` (which is "add 3d Nuke...").
+
+Finally, this shorthand
+```
+- +bug fix exploding phone bug @nobody 
+```
+Will create an issue with:
+- the labels `+fix`
+- assigned to nobody, not even the creator
+
 ## Permissions
 `isshues` has two kinds of permissions:
 
