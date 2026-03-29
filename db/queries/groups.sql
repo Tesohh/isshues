@@ -4,7 +4,8 @@ WHERE id = $1;
 
 -- name: GetGroupByName :one
 SELECT * FROM groups
-WHERE name = $1;
+WHERE name = $1
+AND project_id = $2;
 
 -- name: InsertGroup :one
 INSERT INTO groups (name, color_key, mentionable, project_id)
