@@ -11,6 +11,13 @@ logo_bg = "purple"
 logo_fg = "fg" 
 hide = false # if you don't like having the logo in the statusbar, just set this to true
 
+[priorities]
+crit = { value=10, color="red" } # requires IMMEDIATE attention 
+high = { value=5, color="yellow" } # requires even more attention than usual
+med = { value=3, color="cyan" } # requires more attention than usual
+default = { value=1 } # standard issues. special priority that is applied by default when none is specified 
+low = { value=0, color="black" } # worth considering only if you have extra time
+
 # Groups that are added by default when creating a new project
 [[default_groups]]
 name = "admins"

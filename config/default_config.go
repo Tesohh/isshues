@@ -38,5 +38,15 @@ func ApplyDefaultConfig(viper *viper.Viper) {
 	viper.SetDefault("company.logo_fg", "bg")
 	viper.SetDefault("company.hide", false)
 
+	viper.SetDefault("priorities.crit.value", 10)
+	viper.SetDefault("priorities.crit.color", "red")
+	viper.SetDefault("priorities.high.value", 5)
+	viper.SetDefault("priorities.high.color", "yellow")
+	viper.SetDefault("priorities.med.value", 3)
+	viper.SetDefault("priorities.med.color", "cyan")
+	viper.SetDefault("priorities.default.value", 1)
+	viper.SetDefault("priorities.low.value", 0)
+	viper.SetDefault("priorities.low.color", "black")
+
 	viper.SetDefault("default_groups", default_groups())
 }

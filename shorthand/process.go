@@ -31,7 +31,8 @@ type ShorthandResults struct {
 
 	Dependencies []db.Issue
 
-	Labels   []db.Label
+	Labels []db.Label
+	// PendingLabels []string // TODO:
 	Priority int
 
 	// anything that is problematic but doesn't break the issue creation
@@ -117,6 +118,7 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 			return result, err
 		} else if err == pgx.ErrNoRows {
 			// if user has `create-label` permission, then create the label
+			// TODO: considering moving the creation behaviour to another place to avoid spaghettification
 			if hasCreateLabelPermission {
 				// create the label
 				label, err = app.DB.InsertLabelBasic(ctx, db.InsertLabelBasicParams{
@@ -127,6 +129,7 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 					log.Error("error while creating new label when processing shorthand", "labelName", labelName, "projectId", projectId, "err", err)
 					result.Warnings = append(result.Warnings, WarningInternalError)
 				}
+				// TODO: broadcast RefreshLabels msg
 
 				result.Labels = append(result.Labels, label)
 			} else {
