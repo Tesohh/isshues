@@ -29,6 +29,7 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 	// TODO: add GetGroupFromName query
 
 	// fetch the dependencies and warn if they don't exist
+	// TODO: if the user lacks the `view-unassigned` permission, do not add the dependency to avoid leaking details, and warn
 	// TODO: add GetIssueFromCode query
 
 	// fetch labels and create new labels if they don't exist and user has the "create-label" permission, otherwise warn

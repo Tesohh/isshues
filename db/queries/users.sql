@@ -2,6 +2,15 @@
 SELECT * FROM users
 WHERE id = $1;
 
+-- name: GetUserByUsernameLenient :one
+SELECT * FROM users
+WHERE shortname = $1
+OR username LIKE '%$1%';
+
+-- name: GetUserByUsername :one
+SELECT * FROM users
+WHERE username = $1;
+
 -- name: IsUsernameTaken :one
 SELECT EXISTS (
     SELECT 1 FROM users

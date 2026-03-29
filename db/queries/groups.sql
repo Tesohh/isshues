@@ -1,3 +1,11 @@
+-- name: GetGroupById :one
+SELECT * FROM groups
+WHERE id = $1;
+
+-- name: GetGroupByName :one
+SELECT * FROM groups
+WHERE name = $1;
+
 -- name: InsertGroup :one
 INSERT INTO groups (name, color_key, mentionable, project_id)
 VALUES ($1, $2, $3, $4)

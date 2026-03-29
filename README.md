@@ -17,6 +17,8 @@ Will create an issue with:
 - the `!crit` priority
 - since no assignees were specified, it will be automatically assigned to the creator (you)
 
+---
+
 This shorthand
 ```
 - +feat +gfx add Nuke 3D graphics @lallos >1 !low
@@ -26,7 +28,14 @@ Will create an issue with:
 - the `!low` priority
 - assigned to user `@lallos`
 - depends on the issue `#OCVV-1` (which is "add Nuke").
+
 Notice how the order of the components does not matter.
+
+**User**names are parsed in a lenient fashion, so to tag `@lallos`, `@lal`, `@llos`, `@lall` would suffice.
+this is to favor extremely short typing (especially in the CLI with no autocomplete).
+Specifying a shortname is also allowed, and it takes precedence over the username.
+
+---
 
 This shorthand
 ```
@@ -36,6 +45,10 @@ Will create an issue with:
 - the labels `+idea`
 - assigned to the group `@quantum-team`
 - depends on the issue `#OCVV-2` (which is "add 3d Nuke...").
+
+Group names are not lenient, and they must be typed out precisely.
+
+---
 
 Finally, this shorthand
 ```
