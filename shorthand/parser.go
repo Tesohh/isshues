@@ -13,7 +13,7 @@ type parserCaptures struct {
 	Dependencies []string
 }
 
-var parser = regexp.MustCompile(`(?mi)@(?P<Mention>\w+)|\+(?P<Label>\w+)|>(?P<DependencyCode>\d+)|!(?P<Priority>\w+)`)
+var parser = regexp.MustCompile(`(?mi)@(?P<Mention>[a-z_][a-z0-9_-]*)|\+(?P<Label>\w*)|>(?P<DependencyCode>\d*)|!(?P<Priority>\w*)`)
 
 // Parses a message by running the regex, with no additional processing (except for content)
 func Parse(msg string) parserCaptures {
