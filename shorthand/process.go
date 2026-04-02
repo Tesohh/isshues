@@ -10,16 +10,20 @@ import (
 
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
+	"github.com/Tesohh/isshues/config"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/spf13/viper"
 )
 
 var (
 	WarningMentionFailed                = errors.New("no user (lenient) or group (exact) found")
 	WarningIssueNotFound                = errors.New("no issue found")
 	WarningLabelNotFoundAndNoPermission = errors.New("no label found, and you lack the `create-labels` permission to create a new one")
-	WarningInternalError                = errors.New("internal error")
+	WarningInternalError                = errors.New("internal error. tell your admin!")
+	WarningInternalErrorDefaulting      = errors.New("internal error. tell your admin! defaulting to priority 1")
+	WarningInvalidPriority              = errors.New("invalid priority")
 )
 
 type ShorthandResults struct {
@@ -44,8 +48,7 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 	result := ShorthandResults{}
 	ctx := context.Background()
 
-	// merge raws into text
-	result.Text = strings.Join(captures.Raws, " ")
+	result.Text = captures.Text
 
 	// figure out which mentions are a. Users b. Groups c. Users and groups that don't exist and thus must be discarded
 	if slices.Contains(captures.Mentions, "nobody") {
@@ -140,6 +143,52 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 		}
 	}
 
-	// TODO: check viper for Priority. if there is any problem, set the priority to 1 and warn.
+	// check viper for Priority. if there is any problem, set the priority to 1 and warn.
+	result.Priority, err = parsePriorityWithViper(captures.Priorities, app.Viper)
+	if err != nil {
+		result.Warnings = append(result.Warnings, err)
+	}
+
 	return result, nil
+}
+
+func parsePriorityWithViper(captures []string, viper *viper.Viper) (int, error) {
+	if len(captures) == 0 {
+		var defaultPriority config.Priority
+		err := viper.UnmarshalKey("priorities.default", &defaultPriority)
+		if err != nil {
+			log.Warn("config error, in 'priorities', with default path. (probably priorities.default is not defined). defaulting to 1", "err", err)
+			return 1, WarningInternalErrorDefaulting
+		}
+
+		return defaultPriority.Value, nil
+	} else {
+		var priorities config.Priorities
+		err := viper.UnmarshalKey("priorities", &priorities)
+		if err != nil {
+			log.Warn("config error, in 'priorities', with captures path. defaulting to 1", "err", err)
+			return 1, WarningInternalErrorDefaulting
+		}
+
+		// in case the actual string was requested
+		target := captures[len(captures)-1]
+		if priority, ok := priorities[target]; ok {
+			return priority.Value, WarningInternalErrorDefaulting
+		}
+
+		// in case an integer was (hopefully) requested
+		if value, err := strconv.Atoi(target); err == nil {
+			return value, nil
+		}
+
+		// the priority was invalid, default to 1 and give a useful warning
+		keys := make([]string, 0, len(priorities))
+		for k := range priorities {
+			keys = append(keys, k)
+		}
+
+		options := strings.Join(keys, ", ")
+
+		return 1, fmt.Errorf("%w. must be an integer, or one of (%s)", WarningInvalidPriority, options)
+	}
 }
