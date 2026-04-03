@@ -57,6 +57,6 @@ func RootCmd(session ssh.Session, app *app.App, progPtr **tea.Program) *cobra.Co
 	}
 
 	cmd.AddCommand(projectCmd(session, app, progPtr))
-	cmd.AddCommand(new_issue_cmd(session, app, progPtr))
+	cmd.AddCommand(newIssueCmd(session, app, progPtr))
 	return cmd
 }

@@ -8,6 +8,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/log/v2"
+	"github.com/Tesohh/isshues/action"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/Tesohh/isshues/shorthand"
@@ -73,11 +74,52 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 				return InternalErr
 			}
 
+			// add the pending labels and collect all ids
+			newLabels, err := action.BulkInsertLabels(app, project.ID, product.PendingLabels)
+			if err != nil {
+				return err
+			}
+
+			// collect ids (if only we had .iter().map()...)
+			allLabels := append(newLabels, product.Labels...)
+			labelIds := make([]int64, len(allLabels))
+			for _, label := range allLabels {
+				labelIds = append(labelIds, label.ID)
+			}
+
+			userMentionIDs := make([]int64, len(product.UserMentions))
+			for _, mention := range product.UserMentions {
+				userMentionIDs = append(userMentionIDs, mention.ID)
+			}
+
+			groupMentionIDs := make([]int64, len(product.GroupMentions))
+			for _, mention := range product.GroupMentions {
+				groupMentionIDs = append(groupMentionIDs, mention.ID)
+			}
+
+			dependencyIDs := make([]int64, len(product.Dependencies))
+			for _, dependency := range product.Dependencies {
+				dependencyIDs = append(dependencyIDs, dependency.ID)
+			}
+
 			// prepare the issue
+			params := action.CreateIssueParams{
+				Title:           product.Text,
+				Description:     "",
+				Priority:        product.Priority,
+				RecruiterID:     userId,
+				ProjectID:       project.ID,
+				UserMentionIDs:  userMentionIDs,
+				GroupMentionIDs: groupMentionIDs,
+				DependencyIDs:   dependencyIDs,
+				LabelIDs:        labelIds,
+			}
 
 			// add issue to the db
-			// TODO: create pending labels
-			// show feedback
+			issue, err := action.CreateIssue(app, params)
+			_ = issue
+
+			// show feedback and warnings
 			// broadcast a RefreshIssues{this project} to everyone
 
 			return nil
