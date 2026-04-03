@@ -34,9 +34,9 @@ type ShorthandResults struct {
 
 	Dependencies []db.Issue
 
-	Labels []db.Label
-	// PendingLabels []string // TODO:
-	Priority int
+	Labels        []db.Label
+	PendingLabels []string
+	Priority      int
 
 	// anything that is problematic but doesn't break the issue creation
 	Warnings []error
@@ -106,19 +106,19 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 		}
 	}
 
-	// fetch labels and create new labels if they don't exist and user has the "create-label" permission, otherwise warn
-	hasCreateLabelPermission, err := app.DB.UserHasProjectPermission(ctx, db.UserHasProjectPermissionParams{
-		UserID:              userId,
-		ProjectPermissionID: "create-labels",
-		ProjectID:           projectId,
-	})
-	if err != nil {
-		log.Warn("cannot check if user has create-labels permission while processing shorthand", "userId", userId, "err", err)
-	}
+	// fetch labels
+	// hasCreateLabelPermission, err := app.DB.UserHasProjectPermission(ctx, db.UserHasProjectPermissionParams{
+	// 	UserID:              userId,
+	// 	ProjectPermissionID: "create-labels",
+	// 	ProjectID:           projectId,
+	// })
+	// if err != nil {
+	// 	log.Warn("cannot check if user has create-labels permission while processing shorthand", "userId", userId, "err", err)
+	// }
 
 	for _, labelName := range captures.Labels {
 		label, err := app.DB.GetLabelFromName(ctx, db.GetLabelFromNameParams{
-			Name:      labelName,
+			Name:      strings.ToLower(labelName),
 			ProjectID: projectId,
 		})
 
@@ -126,29 +126,31 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 			return result, err
 		} else if err == pgx.ErrNoRows {
 			// if user has `create-label` permission, then create the label
-			// TODO: considering moving the creation behaviour to another place to avoid spaghettification
-			if hasCreateLabelPermission {
-				// create the label
-				label, err = app.DB.InsertLabelBasic(ctx, db.InsertLabelBasicParams{
-					Name:      labelName,
-					ProjectID: projectId,
-				})
-				if err != nil {
-					log.Error("error while creating new label when processing shorthand", "labelName", labelName, "projectId", projectId, "err", err)
-					result.Warnings = append(result.Warnings, WarningInternalError)
-				}
-				// TODO: broadcast RefreshLabels msg
+			result.PendingLabels = append(result.PendingLabels, strings.ToLower(labelName))
 
-				result.Labels = append(result.Labels, label)
-			} else {
-				result.Warnings = append(result.Warnings, fmt.Errorf("%w. label: %s", WarningLabelNotFoundAndNoPermission, labelName))
-			}
+			// if hasCreateLabelPermission {
+			// 	// create the label
+			// 	label, err = app.DB.InsertLabelBasic(ctx, db.InsertLabelBasicParams{
+			// 		Name:      labelName,
+			// 		ProjectID: projectId,
+			// 	})
+			// 	if err != nil {
+			// 		log.Error("error while creating new label when processing shorthand", "labelName", labelName, "projectId", projectId, "err", err)
+			// 		result.Warnings = append(result.Warnings, WarningInternalError)
+			// 	}
+			// 	// TODO: broadcast RefreshLabels msg
+			//
+			// 	result.Labels = append(result.Labels, label)
+			// } else {
+			// 	result.Warnings = append(result.Warnings, fmt.Errorf("%w. label: %s", WarningLabelNotFoundAndNoPermission, labelName))
+			// }
 		} else if err == nil {
 			result.Labels = append(result.Labels, label)
 		}
 	}
 
 	// check viper for Priority. if there is any problem, set the priority to 1 and warn.
+	var err error
 	result.Priority, err = parsePriorityWithViper(captures.Priorities, app.Viper)
 	if err != nil {
 		result.Warnings = append(result.Warnings, err)
