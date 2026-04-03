@@ -27,9 +27,11 @@ func projectCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comma
 		Use: "project",
 	}
 
-	newCmd := &cobra.Command{
-		Use:  "new [prefix] [title]",
-		Args: cobra.MinimumNArgs(2),
+	createCmd := &cobra.Command{
+		Use:   "create [prefix] [title]",
+		Args:  cobra.MinimumNArgs(2),
+		Short: "Creates a new project (requires the `create-projects` permission)",
+		Long:  "Creates a new project with the given prefix, and title;\nthen creates default groups and adds you to the add_creator groups specified in the server config\n(requires the `create-projects` permission)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			userId, ok := app.SessionIdToUserIds[session.Context().SessionID()]
 			if !ok {
@@ -43,7 +45,7 @@ func projectCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comma
 			})
 
 			if err != nil {
-				log.Error("project new: auth query error", "err", err)
+				log.Error("project create: auth query error", "err", err)
 				return InternalErr
 			}
 			if !authorized {
@@ -58,7 +60,7 @@ func projectCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comma
 
 			err = action.CreateProject(app, userId, title, prefix)
 			if err != nil {
-				log.Errorf("project new: %s", err.Error())
+				log.Errorf("project create: %s", err.Error())
 				if err == action.DuplicatePrefixErr {
 					return err
 				}
@@ -72,7 +74,7 @@ func projectCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comma
 		},
 	}
 
-	projectCmd.AddCommand(newCmd)
+	projectCmd.AddCommand(createCmd)
 
 	return projectCmd
 }
