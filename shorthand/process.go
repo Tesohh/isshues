@@ -50,7 +50,7 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 	result.Text = captures.Text
 
 	// figure out which mentions are a. Users b. Groups c. Users and groups that don't exist and thus must be discarded
-	if !slices.Contains(captures.Mentions, "nobody") {
+	if !slices.Contains(captures.Mentions, "NOBODY") {
 		if len(captures.Mentions) == 0 {
 			user, err := app.DB.GetUserByID(ctx, userId)
 			if err != nil {
