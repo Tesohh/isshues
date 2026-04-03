@@ -31,7 +31,6 @@ type ShorthandResults struct {
 
 	UserMentions  []db.User
 	GroupMentions []db.Group
-	Nobody        bool
 
 	Dependencies []db.Issue
 
@@ -51,32 +50,38 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 	result.Text = captures.Text
 
 	// figure out which mentions are a. Users b. Groups c. Users and groups that don't exist and thus must be discarded
-	if slices.Contains(captures.Mentions, "nobody") {
-		result.Nobody = true
-	} else {
-		for _, mention := range captures.Mentions {
-			// first fetch users leniently (more likely)
-			// TODO: consider doing a single id in ("...") query for faster querying
-
-			user, err := app.DB.GetUserByUsernameLenient(ctx, pgtype.Text{String: mention, Valid: true})
-			if err != nil && err != pgx.ErrNoRows {
+	if !slices.Contains(captures.Mentions, "nobody") {
+		if len(captures.Mentions) == 0 {
+			user, err := app.DB.GetUserByID(ctx, userId)
+			if err != nil {
 				return result, err
-			} else if err == nil {
-				result.UserMentions = append(result.UserMentions, user)
-				continue
 			}
+			result.UserMentions = append(result.UserMentions, user)
+		} else {
+			for _, mention := range captures.Mentions {
+				// first fetch users leniently (more likely)
+				// TODO: consider doing a single id in ("...") query for faster querying
 
-			group, err := app.DB.GetGroupByName(ctx, db.GetGroupByNameParams{
-				Name:      pgtype.Text{String: mention, Valid: true},
-				ProjectID: projectId,
-			})
-			if err != nil && err != pgx.ErrNoRows {
-				return result, err
-			} else if err == pgx.ErrNoRows {
-				// no user or group was found, warn
-				result.Warnings = append(result.Warnings, fmt.Errorf("%w with name: %s", WarningMentionFailed, mention))
-			} else if err == nil {
-				result.GroupMentions = append(result.GroupMentions, group)
+				user, err := app.DB.GetUserByUsernameLenient(ctx, pgtype.Text{String: mention, Valid: true})
+				if err != nil && err != pgx.ErrNoRows {
+					return result, err
+				} else if err == nil {
+					result.UserMentions = append(result.UserMentions, user)
+					continue
+				}
+
+				group, err := app.DB.GetGroupByName(ctx, db.GetGroupByNameParams{
+					Name:      pgtype.Text{String: mention, Valid: true},
+					ProjectID: projectId,
+				})
+				if err != nil && err != pgx.ErrNoRows {
+					return result, err
+				} else if err == pgx.ErrNoRows {
+					// no user or group was found, warn
+					result.Warnings = append(result.Warnings, fmt.Errorf("%w with name: %s", WarningMentionFailed, mention))
+				} else if err == nil {
+					result.GroupMentions = append(result.GroupMentions, group)
+				}
 			}
 		}
 	}
