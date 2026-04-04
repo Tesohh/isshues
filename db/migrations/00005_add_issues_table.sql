@@ -32,7 +32,7 @@ CREATE TABLE issues (
     priority INT NOT NULL,
 
     project_id BIGINT NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
-    recruiter_user_id BIGINT REFERENCES users(id)
+    recruiter_user_id BIGINT NOT NULL REFERENCES users(id)
 );
 
 -- ## IssueAssignees(IssueId, UserId)
