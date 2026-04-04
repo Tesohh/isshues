@@ -77,27 +77,28 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			// add the pending labels and collect all ids
 			newLabels, err := action.BulkInsertLabels(app, project.ID, product.PendingLabels)
 			if err != nil {
-				return err
+				log.Error("new: error while inserting new labels", "err", err)
+				return InternalErr
 			}
 
 			// collect ids (if only we had .iter().map()...)
 			allLabels := append(newLabels, product.Labels...)
-			labelIds := make([]int64, len(allLabels))
+			labelIds := make([]int64, 0, len(allLabels))
 			for _, label := range allLabels {
 				labelIds = append(labelIds, label.ID)
 			}
 
-			userMentionIDs := make([]int64, len(product.UserMentions))
+			userMentionIDs := make([]int64, 0, len(product.UserMentions))
 			for _, mention := range product.UserMentions {
 				userMentionIDs = append(userMentionIDs, mention.ID)
 			}
 
-			groupMentionIDs := make([]int64, len(product.GroupMentions))
+			groupMentionIDs := make([]int64, 0, len(product.GroupMentions))
 			for _, mention := range product.GroupMentions {
 				groupMentionIDs = append(groupMentionIDs, mention.ID)
 			}
 
-			dependencyIDs := make([]int64, len(product.Dependencies))
+			dependencyIDs := make([]int64, 0, len(product.Dependencies))
 			for _, dependency := range product.Dependencies {
 				dependencyIDs = append(dependencyIDs, dependency.ID)
 			}
@@ -115,9 +116,15 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 				LabelIDs:        labelIds,
 			}
 
+			log.Info("adding issue with params", "params", params)
+
 			// add issue to the db
 			issue, err := action.CreateIssue(app, params)
 			_ = issue
+			if err != nil {
+				log.Error("new: error while creating issue", "err", err)
+				return InternalErr
+			}
 
 			// show feedback and warnings
 			// broadcast a RefreshIssues{this project} to everyone

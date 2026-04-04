@@ -78,12 +78,12 @@ func CreateIssue(app *app.App, params CreateIssueParams) (db.Issue, error) {
 	}
 
 	// 5. inserts dependencies
-	relationshipParams := make([]db.BulkInsertIssueRelationshipsParams, len(params.DependencyIDs))
+	relationshipParams := make([]db.BulkInsertIssueRelationshipsParams, 0, len(params.DependencyIDs))
 	for _, id := range params.DependencyIDs {
 		relationshipParams = append(relationshipParams, db.BulkInsertIssueRelationshipsParams{FromIssueID: issue.ID, ToIssueID: id, Category: db.RelationshipDependency})
 	}
 
-	_, err = app.DB.BulkInsertIssueLabels(ctx, labelParams)
+	_, err = app.DB.BulkInsertIssueRelationships(ctx, relationshipParams)
 	if err != nil {
 		return issue, err
 	}
