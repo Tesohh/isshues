@@ -2,15 +2,16 @@ package config
 
 type Priorities map[string]Priority
 
-func (p Priorities) FindClosest(value int) Priority {
+func (p Priorities) FindClosest(value int) (Priority, string) {
 	var (
 		best          Priority
+		bestK         string
 		bestFound     bool
 		fallback      Priority
 		fallbackFound bool
 	)
 
-	for _, pr := range p {
+	for k, pr := range p {
 		if !fallbackFound || pr.Value < fallback.Value {
 			fallback = pr
 			fallbackFound = true
@@ -19,15 +20,16 @@ func (p Priorities) FindClosest(value int) Priority {
 		if pr.Value <= value {
 			if !bestFound || pr.Value > best.Value {
 				best = pr
+				bestK = k
 				bestFound = true
 			}
 		}
 	}
 
 	if bestFound {
-		return best
+		return best, bestK
 	}
-	return fallback
+	return fallback, "default"
 }
 
 type Priority struct {

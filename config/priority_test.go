@@ -25,31 +25,32 @@ func TestPriority(t *testing.T) {
 		},
 	}
 
-	got := priorities.FindClosest(2)
+	// TODO: add tests for k too
+	got, _ := priorities.FindClosest(2)
 	want := priorities["default"]
 	if got != want {
 		t.Errorf("got: %v != want: %v", got, want)
 	}
 
-	got = priorities.FindClosest(1)
+	got, _ = priorities.FindClosest(1)
 	want = priorities["default"]
 	if got != want {
 		t.Errorf("got: %v != want: %v", got, want)
 	}
 
-	got = priorities.FindClosest(1112)
+	got, _ = priorities.FindClosest(1112)
 	want = priorities["crit"]
 	if got != want {
 		t.Errorf("got: %v != want: %v", got, want)
 	}
 
-	got = priorities.FindClosest(4)
+	got, _ = priorities.FindClosest(4)
 	want = priorities["med"]
 	if got != want {
 		t.Errorf("got: %v != want: %v", got, want)
 	}
 
-	got = priorities.FindClosest(0)
+	got, _ = priorities.FindClosest(0)
 	want = priorities["low"]
 	if got != want {
 		t.Errorf("got: %v != want: %v", got, want)

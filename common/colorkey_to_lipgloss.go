@@ -1,12 +1,14 @@
 package common
 
 import (
+	"image/color"
 	"strings"
 
+	"github.com/jackc/pgx/v5/pgtype"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
-func KeyToColor(theme *tint.Tint, key string) *tint.Color {
+func KeyToColor(theme *tint.Tint, key string) color.Color {
 	switch strings.TrimSpace(strings.ToLower(key)) {
 	case "fg":
 		return theme.Fg
@@ -44,7 +46,17 @@ func KeyToColor(theme *tint.Tint, key string) *tint.Color {
 		return theme.White
 	case "yellow":
 		return theme.Yellow
+	case "":
+		return theme.Fg
 	default:
 		return tint.FromHex("#FF0000")
 	}
+}
+
+func NullableKeyToColor(theme *tint.Tint, defaultColor color.Color, key pgtype.Text) color.Color {
+	if !key.Valid || (key.Valid && key.String == "") {
+		return defaultColor
+	}
+
+	return KeyToColor(theme, key.String)
 }
