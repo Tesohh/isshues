@@ -2,6 +2,7 @@ package shorthand
 
 import (
 	"regexp"
+	"slices"
 	"strings"
 )
 
@@ -28,6 +29,11 @@ func Parse(msg string) parserCaptures {
 				*ptrs[i] = append(*ptrs[i], subexp)
 			}
 		}
+	}
+
+	for _, ptr := range ptrs {
+		slices.Sort(*ptr)
+		*ptr = slices.Compact(*ptr)
 	}
 
 	for _, raw := range rawCaptures {
