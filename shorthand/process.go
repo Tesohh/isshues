@@ -180,7 +180,7 @@ func parsePriorityWithViper(captures []string, viper *viper.Viper) (int, error) 
 		// in case the actual string was requested
 		target := captures[len(captures)-1]
 		if priority, ok := priorities[target]; ok {
-			return priority.Value, WarningInternalErrorDefaulting
+			return priority.Value, nil
 		}
 
 		// in case an integer was (hopefully) requested
