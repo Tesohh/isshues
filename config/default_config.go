@@ -28,6 +28,14 @@ func default_groups() []DefaultGroup {
 	}
 }
 
+func defaultLabels() []DefaultLabel {
+	return []DefaultLabel{
+		{Name: "feat", Color: "blue", Symbol: "󰇈"},
+		{Name: "fix", Color: "red", Symbol: ""},
+		{Name: "chore", Color: "green", Symbol: "󰃢"},
+	}
+}
+
 func ApplyDefaultConfig(viper *viper.Viper) {
 	viper.SetDefault("ssh.host", "0.0.0.0")
 	viper.SetDefault("ssh.port", "2222")
@@ -49,4 +57,5 @@ func ApplyDefaultConfig(viper *viper.Viper) {
 	viper.SetDefault("priorities.low.color", "black")
 
 	viper.SetDefault("default_groups", default_groups())
+	viper.SetDefault("default_labels", defaultLabels())
 }

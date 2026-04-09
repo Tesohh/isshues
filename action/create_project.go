@@ -71,5 +71,26 @@ func CreateProject(app *app.App, userId int64, title string, prefix string) erro
 		}
 	}
 
+	// add default groups
+	var defaultLabels []config.DefaultLabel
+	err = app.Viper.UnmarshalKey("default_labels", &defaultLabels)
+	if err != nil {
+		return fmt.Errorf("default_labels config error: %w", err)
+	}
+
+	for _, label := range defaultLabels {
+		params := db.InsertLabelParams{
+			Name:      label.Name,
+			ColorKey:  pgtype.Text{String: label.Color, Valid: label.Color != ""},
+			Symbol:    pgtype.Text{String: label.Symbol, Valid: label.Symbol != ""},
+			ProjectID: projectId,
+		}
+
+		_, err := app.GetDB().InsertLabel(ctx, params)
+		if err != nil {
+			return fmt.Errorf("label insertion error: %w", err)
+		}
+	}
+
 	return nil
 }

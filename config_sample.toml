@@ -18,6 +18,25 @@ med = { value=3, color="cyan" } # requires more attention than usual
 default = { value=1 } # standard issues. special priority that is applied by default when none is specified 
 low = { value=0, color="black" } # worth considering only if you have extra time
 
+# Labels that are added by default on project creation. Recommended to keep some "well defined" labels for common categories.
+[[default_labels]] 
+# anything that improves the project: new features, optimizations, refactorings...
+name = "feat"
+color = "blue"
+symbol = "󰇈"
+
+[[default_labels]]
+# unexpected bugs or behaviours that pop up and need to be fixed. goes well with !crit...
+name = "fix"
+color = "red"
+symbol = ""
+
+[[default_labels]]
+# anything that is required to do, but doesn't "touch" the code, eg. documentation, presentations, submissions, deadlines, advertisements...
+name = "chore"
+color = "green"
+symbol = "󰃢"
+
 # Groups that are added by default when creating a new project
 [[default_groups]]
 name = "admins"
