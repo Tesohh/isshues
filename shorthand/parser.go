@@ -12,15 +12,16 @@ type parserCaptures struct {
 	Labels       []string
 	Priorities   []string
 	Dependencies []string
+	Descriptions []string
 }
 
-var parser = regexp.MustCompile(`(?mi)@(?P<Mention>[a-z_][a-z0-9_-]*)|\+(?P<Label>\w*)|>(?P<DependencyCode>\d*)|!(?P<Priority>\w*)|\"(?P<Description>.+)\"`)
+var parser = regexp.MustCompile(`(?mi)@(?P<Mention>[a-z_][a-z0-9_-]*)|\+(?P<Label>\w*)|>(?P<DependencyCode>\d*)|!(?P<Priority>\w*)|desc\:(?P<Description>.+):`)
 
 // Parses a message by running the regex, with no additional processing (except for content)
 func Parse(msg string) parserCaptures {
 	captures := parserCaptures{}
 	rawCaptures := []string{}
-	ptrs := []*[]string{&rawCaptures, &captures.Mentions, &captures.Labels, &captures.Dependencies, &captures.Priorities}
+	ptrs := []*[]string{&rawCaptures, &captures.Mentions, &captures.Labels, &captures.Dependencies, &captures.Priorities, &captures.Descriptions}
 
 	matches := parser.FindAllStringSubmatch(msg, -1)
 	for _, match := range matches {

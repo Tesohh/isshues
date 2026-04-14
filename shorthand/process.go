@@ -27,7 +27,8 @@ var (
 )
 
 type ShorthandResults struct {
-	Text string
+	Title       string
+	Description string
 
 	UserMentions  []db.User
 	GroupMentions []db.Group
@@ -47,7 +48,9 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 	result := ShorthandResults{}
 	ctx := context.Background()
 
-	result.Text = captures.Text
+	result.Title = captures.Text
+
+	result.Description = strings.Join(captures.Descriptions, "\n")
 
 	// figure out which mentions are a. Users b. Groups c. Users and groups that don't exist and thus must be discarded
 	if !slices.Contains(captures.Mentions, "NOBODY") {

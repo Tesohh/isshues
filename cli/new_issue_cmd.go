@@ -110,8 +110,8 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 
 			// prepare the issue
 			params := action.CreateIssueParams{
-				Title:           product.Text,
-				Description:     "",
+				Title:           product.Title,
+				Description:     product.Description,
 				Priority:        product.Priority,
 				RecruiterID:     userId,
 				ProjectID:       project.ID,

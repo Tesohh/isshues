@@ -69,8 +69,8 @@ func TestParser(t *testing.T) {
 		}
 	})
 
-	t.Run("+bug fix exploding phone bug \"as a user, i would like it if my phone didnt explode.\"", func(t *testing.T) {
-		input := "+bug fix exploding phone bug \"as a user, i would like it if my phone didnt explode.\""
+	t.Run("+bug fix exploding phone bug desc:as a user, i would like it if my phone didnt explode.:", func(t *testing.T) {
+		input := "+bug fix exploding phone bug desc:as a user, i would like it if my phone didnt explode.:"
 		want := parserCaptures{
 			Text:         "fix exploding phone bug",
 			Mentions:     nil,
