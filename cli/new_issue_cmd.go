@@ -154,6 +154,10 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			serialStr := mutedStyle.Render(fmt.Sprintf("#%s-%d:", project.Prefix, issue.Code))
 			title := fmt.Sprintf("%s %s %s", circleStr, serialStr, issue.Title)
 
+			if issue.Description.Valid {
+				title += " " + mutedStyle.Render("[...]")
+			}
+
 			bottomStrs := []string{}
 
 			if closestPriorityK != "default" {

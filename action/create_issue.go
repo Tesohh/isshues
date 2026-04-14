@@ -43,7 +43,7 @@ func CreateIssue(app *app.App, params CreateIssueParams) (db.Issue, error) {
 	issue, err := app.DB.InsertIssue(ctx, db.InsertIssueParams{
 		Title:           params.Title,
 		Code:            count + 1,
-		Description:     pgtype.Text{String: params.Description, Valid: true},
+		Description:     pgtype.Text{String: params.Description, Valid: params.Description != ""},
 		Status:          db.StatusTodo,
 		Priority:        int32(params.Priority),
 		ProjectID:       params.ProjectID,
