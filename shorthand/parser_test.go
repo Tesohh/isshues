@@ -14,6 +14,7 @@ func TestParser(t *testing.T) {
 			Labels:       []string{"feat", "frontend"},
 			Priorities:   []string{"crit"},
 			Dependencies: nil,
+			Descriptions: nil,
 		}
 		got := Parse(input)
 		if !reflect.DeepEqual(got, want) {
@@ -29,6 +30,7 @@ func TestParser(t *testing.T) {
 			Labels:       []string{"feat", "gfx"},
 			Priorities:   []string{"low"},
 			Dependencies: []string{"1"},
+			Descriptions: nil,
 		}
 		got := Parse(input)
 		if !reflect.DeepEqual(got, want) {
@@ -59,6 +61,23 @@ func TestParser(t *testing.T) {
 			Labels:       []string{"bug"},
 			Priorities:   nil,
 			Dependencies: nil,
+			Descriptions: nil,
+		}
+		got := Parse(input)
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("got: %#v != want: %#v", got, want)
+		}
+	})
+
+	t.Run("+bug fix exploding phone bug \"as a user, i would like it if my phone didnt explode.\"", func(t *testing.T) {
+		input := "+bug fix exploding phone bug \"as a user, i would like it if my phone didnt explode.\""
+		want := parserCaptures{
+			Text:         "fix exploding phone bug",
+			Mentions:     nil,
+			Labels:       []string{"bug"},
+			Priorities:   nil,
+			Dependencies: nil,
+			Descriptions: []string{"as a user, i would like it if my phone didnt explode."},
 		}
 		got := Parse(input)
 		if !reflect.DeepEqual(got, want) {
