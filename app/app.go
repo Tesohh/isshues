@@ -19,6 +19,7 @@ import (
 	"github.com/Tesohh/isshues/common"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/charmbracelet/ssh"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -29,8 +30,9 @@ type App struct {
 	host string
 	port string
 
-	Viper *viper.Viper
-	DB    *db.Queries
+	Viper  *viper.Viper
+	DB     *db.Queries
+	DBPool *pgxpool.Pool
 
 	SessionIdToUserIds map[string]int64
 
@@ -51,13 +53,14 @@ func (a *App) Broadcast(msg tea.Msg) {
 
 type isshuesCmd func(session ssh.Session, app *App, progPtr **tea.Program) *cobra.Command
 
-func NewApp(dbConn db.DBTX, viper *viper.Viper, rootCmd isshuesCmd) *App {
+func NewApp(dbConn *pgxpool.Pool, viper *viper.Viper, rootCmd isshuesCmd) *App {
 	a := new(App)
 	a.SessionIdToUserIds = make(map[string]int64)
 
 	a.Viper = viper
 	a.host = viper.GetString("ssh.host")
 	a.port = viper.GetString("ssh.port")
+	a.DBPool = dbConn
 	a.DB = db.New(dbConn)
 
 	s, err := wish.NewServer(
