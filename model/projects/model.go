@@ -22,6 +22,7 @@ type Model struct {
 	app   *app.App
 	theme *tint.Tint
 
+	projects     []db.Project
 	list         list.Model
 	creationForm *huh.Form
 
@@ -33,6 +34,7 @@ type Model struct {
 
 func New(userId int64, app *app.App, theme *tint.Tint) Model {
 	m := Model{
+		projects:     []db.Project{},
 		list:         list.New([]list.Item{}, itemDelegate{theme}, 0, 0),
 		app:          app,
 		theme:        theme,
@@ -68,16 +70,20 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		cmd = m.FetchProjectsCmd
 
 	case UpdateProjectsMsg:
+		m.projects = msg.Projects
 		m.list.SetItems(itemsFromProjects(msg.Projects))
 
 	case InitHasCreatePermissionMsg:
 		m.list.AdditionalShortHelpKeys = func() []key.Binding {
-			return []key.Binding{key.NewBinding(key.WithKeys("+"), key.WithHelp("+", "create project"))}
+			return []key.Binding{key.NewBinding(key.WithKeys("+"), key.WithHelp("+", "create project")), key.NewBinding(key.WithKeys("enter"), key.WithHelp("enter", "switch to project"))}
 		}
 
 	case tea.KeyPressMsg:
 		if msg.String() == "?" && m.creationForm == nil {
 			m.showFullHelp = !m.showFullHelp
+		} else if msg.String() == "enter" && m.creationForm == nil {
+			i := m.list.GlobalIndex()
+			cmd = m.MakeSwitchToProjectCmd(m.projects[i].ID)
 		} else if msg.String() == "+" && m.creationForm == nil {
 			ctx := context.Background()
 			// TODO: do this in a tea.Cmd

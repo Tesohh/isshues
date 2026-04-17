@@ -7,6 +7,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	"github.com/Tesohh/isshues/model"
+	"github.com/Tesohh/isshues/model/issues"
 	"github.com/Tesohh/isshues/model/projects"
 	"github.com/Tesohh/isshues/model/statusbar"
 	tint "github.com/lrstanley/bubbletint/v2"
@@ -19,13 +20,18 @@ type Status interface {
 }
 
 type ViewingProjects struct{}
+type ViewingIssuesSideBySide struct {
+	// TEMP: TODO: need to find a better way to manage this! how do we keep all views for all projects? do we keep an array with all the views,
+	// which are loaded when the project is opened?
+}
 
 type Model struct {
 	App         *app.App
 	StatusStack []Status
 	Theme       *tint.Tint
 
-	ProjectsView projects.Model
+	ProjectsView         projects.Model
+	IssuesViewSideBySide issues.SideBySideModel
 
 	StatusBar statusbar.Model
 
@@ -34,11 +40,12 @@ type Model struct {
 
 func New(app *app.App, userId int64, theme *tint.Tint) Model {
 	return Model{
-		UserId:       userId,
-		ProjectsView: projects.New(userId, app, theme),
-		StatusBar:    statusbar.New(app, theme),
-		StatusStack:  []Status{ViewingProjects{}},
-		Theme:        theme,
+		UserId:               userId,
+		ProjectsView:         projects.New(userId, app, theme),
+		IssuesViewSideBySide: issues.NewSideBySide(userId, app, theme),
+		StatusBar:            statusbar.New(app, theme),
+		StatusStack:          []Status{ViewingProjects{}},
+		Theme:                theme,
 	}
 }
 
@@ -82,7 +89,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			var cmd tea.Cmd
 			m.ProjectsView, cmd = m.ProjectsView.Update(msg)
 			cmds = append(cmds, cmd)
-
+		case ViewingIssuesSideBySide:
+			var cmd tea.Cmd
+			m.IssuesViewSideBySide, cmd = m.IssuesViewSideBySide.Update(msg)
+			cmds = append(cmds, cmd)
 		}
 	}
 

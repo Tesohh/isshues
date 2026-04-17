@@ -59,3 +59,11 @@ func (m Model) HasCreatePermissionCmd() tea.Msg {
 		return nil
 	}
 }
+
+func (m Model) MakeSwitchToProjectCmd(projectId int64) func() tea.Msg {
+	return func() tea.Msg {
+		// TODO
+		log.Info("switching to project", "projectId", projectId)
+		return nil
+	}
+}
