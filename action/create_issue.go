@@ -28,19 +28,17 @@ type CreateIssueParams struct {
 // 4. inserts label refs
 // 5. inserts dependencies
 // Assumes the user has the right permissions, and all input is valid
-func CreateIssue(app *app.App, params CreateIssueParams) (db.Issue, error) {
-	// TODO: use a db transaction
-
+func CreateIssue(app *app.App, query *db.Queries, params CreateIssueParams) (db.Issue, error) {
 	ctx := context.Background()
 
 	// 0. gets the amount of issues (for the code)
-	count, err := app.DB.GetIssuesCountInProject(ctx, params.ProjectID)
+	count, err := query.GetIssuesCountInProject(ctx, params.ProjectID)
 	if err != nil {
 		return db.Issue{}, err
 	}
 
 	// 1. inserts the issue
-	issue, err := app.DB.InsertIssue(ctx, db.InsertIssueParams{
+	issue, err := query.InsertIssue(ctx, db.InsertIssueParams{
 		Title:           params.Title,
 		Code:            count + 1,
 		Description:     pgtype.Text{String: params.Description, Valid: params.Description != ""},
@@ -59,7 +57,7 @@ func CreateIssue(app *app.App, params CreateIssueParams) (db.Issue, error) {
 		assigneeParams = append(assigneeParams, db.BulkInsertIssueAssigneesParams{IssueID: issue.ID, UserID: id})
 	}
 
-	_, err = app.DB.BulkInsertIssueAssignees(ctx, assigneeParams)
+	_, err = query.BulkInsertIssueAssignees(ctx, assigneeParams)
 	if err != nil {
 		return issue, err
 	}
@@ -72,7 +70,7 @@ func CreateIssue(app *app.App, params CreateIssueParams) (db.Issue, error) {
 		labelParams = append(labelParams, db.BulkInsertIssueLabelsParams{IssueID: issue.ID, LabelID: id})
 	}
 
-	_, err = app.DB.BulkInsertIssueLabels(ctx, labelParams)
+	_, err = query.BulkInsertIssueLabels(ctx, labelParams)
 	if err != nil {
 		return issue, err
 	}
@@ -83,7 +81,7 @@ func CreateIssue(app *app.App, params CreateIssueParams) (db.Issue, error) {
 		relationshipParams = append(relationshipParams, db.BulkInsertIssueRelationshipsParams{FromIssueID: issue.ID, ToIssueID: id, Category: db.RelationshipDependency})
 	}
 
-	_, err = app.DB.BulkInsertIssueRelationships(ctx, relationshipParams)
+	_, err = query.BulkInsertIssueRelationships(ctx, relationshipParams)
 	if err != nil {
 		return issue, err
 	}

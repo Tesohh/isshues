@@ -15,11 +15,11 @@ import (
 var DuplicatePrefixErr = fmt.Errorf("prefix already exists")
 
 // note: prefix must be 4 chars and uppercase already
-func CreateProject(app *app.App, userId int64, title string, prefix string) error {
+func CreateProject(app *app.App, query *db.Queries, userId int64, title string, prefix string) error {
 	ctx := context.Background()
 
 	// create the project
-	projectId, err := app.GetDB().InsertProject(ctx, db.InsertProjectParams{
+	projectId, err := query.InsertProject(ctx, db.InsertProjectParams{
 		Title:  title,
 		Prefix: prefix,
 	})
@@ -44,13 +44,13 @@ func CreateProject(app *app.App, userId int64, title string, prefix string) erro
 			Mentionable: group.Mentionable,
 			ProjectID:   projectId,
 		}
-		groupId, err := app.GetDB().InsertGroup(ctx, params)
+		groupId, err := query.InsertGroup(ctx, params)
 		if err != nil {
 			return fmt.Errorf("group insertion error: %w", err)
 		}
 
 		for _, permission := range group.Permissions {
-			err = app.GetDB().GrantPermissionToGroup(ctx, db.GrantPermissionToGroupParams{
+			err = query.GrantPermissionToGroup(ctx, db.GrantPermissionToGroupParams{
 				GroupID:             groupId,
 				ProjectPermissionID: permission,
 			})
@@ -61,7 +61,7 @@ func CreateProject(app *app.App, userId int64, title string, prefix string) erro
 
 		// add creator to the admins group
 		if group.AddCreator {
-			err = app.GetDB().AddUserToGroup(ctx, db.AddUserToGroupParams{
+			err = query.AddUserToGroup(ctx, db.AddUserToGroupParams{
 				GroupID: groupId,
 				UserID:  userId,
 			})
@@ -86,7 +86,7 @@ func CreateProject(app *app.App, userId int64, title string, prefix string) erro
 			ProjectID: projectId,
 		}
 
-		_, err := app.GetDB().InsertLabel(ctx, params)
+		_, err := query.InsertLabel(ctx, params)
 		if err != nil {
 			return fmt.Errorf("label insertion error: %w", err)
 		}

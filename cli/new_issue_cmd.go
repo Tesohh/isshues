@@ -38,8 +38,17 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 				return errors.New("your userid was not found in the session map. might be an auth issue.")
 			}
 
+			tx, err := app.DBPool.Begin(ctx)
+			if err != nil {
+				log.Error("new: cannot start transaction", "prefix", args[0], "err", err)
+				return InternalErr
+			}
+			defer tx.Rollback(ctx)
+
+			query := db.New(tx)
+
 			// get the project id
-			project, err := app.DB.GetProjectByPrefix(ctx, strings.ToUpper(args[0]))
+			project, err := query.GetProjectByPrefix(ctx, strings.ToUpper(args[0]))
 			if err == pgx.ErrNoRows {
 				return ProjectNotFoundErr
 			} else if err != nil {
@@ -48,7 +57,7 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			}
 
 			// check permissions
-			hasPermission, err := app.DB.UserHasProjectPermission(ctx, db.UserHasProjectPermissionParams{
+			hasPermission, err := query.UserHasProjectPermission(ctx, db.UserHasProjectPermissionParams{
 				UserID:              userId,
 				ProjectPermissionID: "write-issues",
 				ProjectID:           project.ID,
@@ -124,8 +133,7 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			log.Info("adding issue with params", "params", params)
 
 			// add issue to the db
-			issue, err := action.CreateIssue(app, params)
-			_ = issue
+			issue, err := action.CreateIssue(app, query, params)
 			if err != nil {
 				log.Error("new: error while creating issue", "err", err)
 				return InternalErr
@@ -220,6 +228,12 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			feedback := fmt.Sprintf("Created new issue successfully\n\n%s\n%s\n\n%s", title, bottom, warnings)
 
 			wish.Print(session, feedback)
+
+			err = tx.Commit(ctx)
+			if err != nil {
+				log.Errorf("new: %s", err.Error())
+				return InternalErr
+			}
 
 			// broadcast a RefreshIssues{this project} to everyone
 

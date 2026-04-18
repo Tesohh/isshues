@@ -36,13 +36,29 @@ func (m Model) FetchProjectsCmd() tea.Msg {
 
 func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 	return func() tea.Msg {
-		err := action.CreateProject(m.app, m.userId, title, prefix)
+		// TODO: find a way to avoid the TOCTOU; there's a gap between checking for permission and making this transaction
+		// maybe just recheck permission? it's not that bad
+
+		ctx := context.Background()
+		tx, err := m.app.DBPool.Begin(ctx)
 		if err != nil {
-			return model.ErrMsg{Err: err}
-		} else {
-			m.app.Broadcast(RefreshProjectsMsg{})
-			return nil
+			return model.ErrMsg{Err: err} // TODO: show "internal error"
 		}
+		defer tx.Rollback(ctx)
+		query := db.New(tx)
+
+		err = action.CreateProject(m.app, query, m.userId, title, prefix)
+		if err != nil {
+			return model.ErrMsg{Err: err} // TODO: log error and show internal error
+		}
+
+		m.app.Broadcast(RefreshProjectsMsg{})
+
+		err = tx.Commit(ctx)
+		if err != nil {
+			return model.ErrMsg{Err: err} // TODO: show "internal error"
+		}
+		return nil
 	}
 }
 

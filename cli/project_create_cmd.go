@@ -22,13 +22,23 @@ func projectCreateCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra
 		Short: "Creates a new project (requires the `create-projects` permission)",
 		Long:  "Creates a new project with the given prefix, and title;\nthen creates default groups and adds you to the add_creator groups specified in the server config\n(requires the `create-projects` permission)",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
+
+			tx, err := app.DBPool.Begin(ctx)
+			if err != nil {
+				log.Error("project create: cannot start transaction", "prefix", args[0], "err", err)
+				return InternalErr
+			}
+			defer tx.Rollback(ctx)
+
+			query := db.New(tx)
+
 			userId, ok := app.SessionIdToUserIds[session.Context().SessionID()]
 			if !ok {
 				return errors.New("your userid was not found in the session map. might be an auth issue.")
 			}
 
-			ctx := context.Background()
-			authorized, err := app.GetDB().UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
+			authorized, err := query.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
 				UserID:             userId,
 				GlobalPermissionID: "create-projects",
 			})
@@ -47,7 +57,7 @@ func projectCreateCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra
 			}
 			title := strings.Join(args[1:], " ")
 
-			err = action.CreateProject(app, userId, title, prefix)
+			err = action.CreateProject(app, query, userId, title, prefix)
 			if err != nil {
 				log.Errorf("project create: %s", err.Error())
 				if err == action.DuplicatePrefixErr {
@@ -57,6 +67,13 @@ func projectCreateCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra
 			}
 
 			cmd.Println("project created!")
+
+			err = tx.Commit(ctx)
+			if err != nil {
+				log.Errorf("project create: %s", err.Error())
+				return InternalErr
+			}
+
 			app.Broadcast(projects.RefreshProjectsMsg{})
 
 			return nil
