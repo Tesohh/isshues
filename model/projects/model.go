@@ -52,7 +52,15 @@ func (m Model) Init() tea.Cmd {
 	return tea.Batch(m.FetchProjectsCmd, m.HasCreatePermissionCmd)
 }
 
-func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+func (m Model) Rehydrate() tea.Cmd {
+	return nil
+}
+
+func (m Model) Title() string {
+	return "Projects"
+}
+
+func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 	var cmd tea.Cmd
 	var formIsNew bool
 

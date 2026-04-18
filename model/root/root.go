@@ -1,37 +1,26 @@
 package root
 
 import (
+	"fmt"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
+	"github.com/Tesohh/isshues/common"
 	"github.com/Tesohh/isshues/model"
-	"github.com/Tesohh/isshues/model/issues"
 	"github.com/Tesohh/isshues/model/projects"
 	"github.com/Tesohh/isshues/model/statusbar"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
-// TODO: consider just moving the model here.
-// Instead of checkign the status and then redirecting the updates there, just send them to the last in the stack
-type Status interface {
-	// Title() string
-}
-
-type ViewingProjects struct{}
-type ViewingIssuesSideBySide struct {
-	// TEMP: TODO: need to find a better way to manage this! how do we keep all views for all projects? do we keep an array with all the views,
-	// which are loaded when the project is opened?
-}
-
 type Model struct {
-	App         *app.App
-	StatusStack []Status
-	Theme       *tint.Tint
+	App   *app.App
+	Theme *tint.Tint
 
-	ProjectsView         projects.Model
-	IssuesViewSideBySide issues.SideBySideModel
+	NavStack []model.NavModel
+	// ProjectsView         projects.Model
+	// IssuesViewSideBySide issues.SideBySideModel
 
 	StatusBar statusbar.Model
 
@@ -40,12 +29,10 @@ type Model struct {
 
 func New(app *app.App, userId int64, theme *tint.Tint) Model {
 	return Model{
-		UserId:               userId,
-		ProjectsView:         projects.New(userId, app, theme),
-		IssuesViewSideBySide: issues.NewSideBySide(userId, app, theme),
-		StatusBar:            statusbar.New(app, theme),
-		StatusStack:          []Status{ViewingProjects{}},
-		Theme:                theme,
+		UserId:    userId,
+		StatusBar: statusbar.New(app, theme),
+		NavStack:  []model.NavModel{projects.New(userId, app, theme)},
+		Theme:     theme,
 	}
 }
 
@@ -56,8 +43,23 @@ func (m Model) testChangeTHeme() tea.Msg {
 	return model.ThemeChangedMsg{NewTheme: theme}
 }
 
+func (m Model) Active() model.NavModel {
+	return m.NavStack[len(m.NavStack)-1]
+}
+
+func (m Model) Propagate(msg tea.Msg) []tea.Cmd {
+	cmds := []tea.Cmd{}
+	for i, nav := range m.NavStack {
+		var cmd tea.Cmd
+		m.NavStack[i], cmd = nav.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
+	return cmds
+}
+
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.ProjectsView.Init(), m.StatusBar.Init()) //, m.testChangeTHeme)
+	return tea.Batch(m.Active().Init(), m.StatusBar.Init()) //, m.testChangeTHeme)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -75,38 +77,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case model.ThemeChangedMsg:
 		m.Theme = msg.NewTheme
 
-		var pcmd tea.Cmd
-		m.ProjectsView, pcmd = m.ProjectsView.Update(msg)
-		cmds = append(cmds, pcmd)
+		cmds = append(cmds, m.Propagate(msg)...)
 
 		var sbcmd tea.Cmd
 		m.StatusBar, sbcmd = m.StatusBar.Update(msg)
 		cmds = append(cmds, sbcmd)
 
 	default:
-		switch m.StatusStack[len(m.StatusStack)-1].(type) {
-		case ViewingProjects:
-			var cmd tea.Cmd
-			m.ProjectsView, cmd = m.ProjectsView.Update(msg)
-			cmds = append(cmds, cmd)
-		case ViewingIssuesSideBySide:
-			var cmd tea.Cmd
-			m.IssuesViewSideBySide, cmd = m.IssuesViewSideBySide.Update(msg)
-			cmds = append(cmds, cmd)
-		}
+		var cmd tea.Cmd
+		m.NavStack[len(m.NavStack)-1], cmd = m.Active().Update(msg)
+		cmds = append(cmds, cmd)
 	}
 
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() tea.View {
-	statusbar := m.StatusBar.View(m.ProjectsView)
+	statusbar := m.StatusBar.View(m.Active())
 
 	// statusbar = m.StatusBar.HelpBar.ShortHelpView(m.ProjectsView.ShortHelp())
 
-	v := tea.NewView(m.ProjectsView.View() + statusbar)
+	v := tea.NewView(m.Active().View() + statusbar)
 
 	v.AltScreen = true
+	v.WindowTitle = fmt.Sprintf("isshues %s / %s / %s", common.GetVersion(), m.App.Viper.GetString("company.name"), m.Active().Title())
 	v.BackgroundColor = m.Theme.Bg
 
 	return v
