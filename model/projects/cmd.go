@@ -20,6 +20,10 @@ type UpdateProjectsMsg struct {
 
 type InitHasCreatePermissionMsg struct{}
 
+type SwitchToProjectMsg struct {
+	ProjectId int64
+}
+
 func (m Model) FetchProjectsCmd() tea.Msg {
 	log.Info("Fetching projects")
 
@@ -84,8 +88,6 @@ func (m Model) HasCreatePermissionCmd() tea.Msg {
 
 func (m Model) MakeSwitchToProjectCmd(projectId int64) func() tea.Msg {
 	return func() tea.Msg {
-		// TODO
-		log.Info("switching to project", "projectId", projectId)
-		return nil
+		return SwitchToProjectMsg{ProjectId: projectId}
 	}
 }

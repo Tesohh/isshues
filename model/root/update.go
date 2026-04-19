@@ -3,6 +3,8 @@ package root
 import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/Tesohh/isshues/model"
+	"github.com/Tesohh/isshues/model/issues"
+	"github.com/Tesohh/isshues/model/projects"
 )
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -25,6 +27,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		var sbcmd tea.Cmd
 		m.StatusBar, sbcmd = m.StatusBar.Update(msg)
 		cmds = append(cmds, sbcmd)
+
+	case projects.SwitchToProjectMsg:
+		issuesModel := issues.New(m.UserId, msg.ProjectId, m.App, m.Theme)
+		cmds = append(cmds, issuesModel.Init())
+		m.NavStack = append(m.NavStack, issuesModel)
 
 	default:
 		var cmd tea.Cmd

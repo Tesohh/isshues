@@ -32,7 +32,7 @@ func (m Model) Active() model.NavModel {
 	return m.NavStack[len(m.NavStack)-1]
 }
 
-func (m Model) Propagate(msg tea.Msg) []tea.Cmd {
+func (m Model) PropagateNav(msg tea.Msg) []tea.Cmd {
 	cmds := []tea.Cmd{}
 	for i, nav := range m.NavStack {
 		var cmd tea.Cmd
