@@ -11,6 +11,8 @@ logo_bg = "purple"
 logo_fg = "fg" 
 hide = false # if you don't like having the logo in the statusbar, just set this to true
 
+# Note that these are just recommendations, and what the author likes to use, feel free to use whatever priority you like
+# Also note that changing these will NOT change the priorities of already created issues. Changing the value of a priority will make all your existing issues show an integer priority instead of the text.
 [priorities]
 crit = { value=10, color="red" } # requires IMMEDIATE attention 
 high = { value=5, color="yellow" } # requires even more attention than usual
@@ -19,6 +21,7 @@ default = { value=1 } # standard issues. special priority that is applied by def
 low = { value=0, color="black" } # worth considering only if you have extra time
 
 # Labels that are added by default on project creation. Recommended to keep some "well defined" labels for common categories.
+# Note that these are just recommendations, and what the author likes to use, feel free to use whatever default labels you like
 [[default_labels]] 
 # anything that improves the project: new features, optimizations, refactorings...
 name = "feat"
