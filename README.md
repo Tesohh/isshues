@@ -2,6 +2,8 @@
 TUI/CLI Project manager for small teams over SSH
 
 ## Shorthand syntax
+Shorthand syntax is the most important part of isshues and is actually how it was born in the first place (see #history)
+
 Definitions:
 - Component: something preceded by a special symbol that will apply a label, dependency etc.
 
@@ -80,3 +82,28 @@ This new "anonymous" group will only contain that user and cannot have other use
 > [!NOTE]  
 > users are members of a project if they are members of _any_ group inside of a project. 
 > which means, kicking a user involves removing them from ALL groups (including the "anonymous" group which should be deleted.)
+
+## History
+This is the third attempt at creating the perfect project manager for me and my team (@PausettaOrg).
+- First attempt: [issues-bot](https://github.com/Tesohh/issues-bot) 
+- Second attempt: [issues-bot-2](https://github.com/Tesohh/issues-bot-2) 
+
+This whole thing started from me and my friend communicating over discord during a internship type thing we were doing together.
+We started using this channel named `issues` that contained rigidly formatted issues, for example:
+
+```
+@FIX @IMPORTANT fix wave precision @lallos
+@FEAT @IMPORTANT add wireless protocol @tesohh
+```
+
+When we were done, we added a :checkmark: reaction.
+
+A bot for gathering these was imminent, so i made one super quickly, it took me a week or so. This was v1. 
+After reading a message, that starts with a `-` (like a bullet list), it would parse the shorthand syntax and create a discord thread.
+
+This worked incredibly well, but the bot was made so hastily that it was very hard to add any new features.
+
+So eventually I made v2 with some new features.
+
+Now i'm making yet a new version, but completely independent from discord, because I don't like having a discord client always open, 
+plus i'm a bit worried about the new age verification stuff.
