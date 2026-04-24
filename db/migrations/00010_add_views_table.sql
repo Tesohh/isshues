@@ -1,7 +1,7 @@
 -- +goose Up
 CREATE TYPE view_priority_mode AS ENUM ('lt', 'le', 'eq', 'ge', 'gt');
 CREATE TYPE view_many_mode AS ENUM ('any', 'all', 'exact');
-CREATE TYPE view_sort_by AS ENUM ('code', 'creation_date', 'edit_date', 'priority');
+CREATE TYPE view_sort_by AS ENUM ('code', 'edit_date', 'priority');
 CREATE TYPE view_sort_order AS ENUM ('ascending', 'descending');
 CREATE TYPE view_style AS ENUM ('panels', 'table');
 

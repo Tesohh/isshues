@@ -82,10 +82,9 @@ func GenerateViewQuery(view db.View, params ViewQueryParams) (string, []any) {
 	})
 
 	sortBy := map[db.ViewSortBy]string{
-		db.ViewSortByCode:         "issues.code",
-		db.ViewSortByCreationDate: "issues.id", // TODO: add created_at column
-		db.ViewSortByEditDate:     "issues.id", // TODO: add updated_at column
-		db.ViewSortByPriority:     "issues.priority",
+		db.ViewSortByCode:     "issues.code",
+		db.ViewSortByEditDate: "issues.updated_at",
+		db.ViewSortByPriority: "issues.priority",
 	}[view.SortBy]
 
 	sortOrder := map[db.ViewSortOrder]string{
