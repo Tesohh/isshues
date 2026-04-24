@@ -20,7 +20,7 @@ import (
 // [x] SortOrder              ViewSortOrder
 
 type ViewQueryParams struct {
-	viewerUserId int64
+	ViewerUserID int64
 }
 
 // Generate a VERY large query for getting all issues related to a view.
@@ -69,7 +69,7 @@ func GenerateViewQuery(view db.View, params ViewQueryParams) (string, []any) {
 
 	var additionalAssigneeIDs []int64
 	if view.AssigneesIncludeViewer {
-		additionalAssigneeIDs = []int64{params.viewerUserId}
+		additionalAssigneeIDs = []int64{params.ViewerUserID}
 	}
 
 	appendManyFilter(&b, &binds, view.ID, manyFilter{
