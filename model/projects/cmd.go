@@ -62,12 +62,15 @@ func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 			return model.ErrMsg{Err: err} // TODO: log error and show internal error
 		}
 
-		m.app.Broadcast(RefreshProjectsMsg{})
-
 		err = tx.Commit(ctx)
 		if err != nil {
 			return model.ErrMsg{Err: err} // TODO: show "internal error"
 		}
+
+		log.Info("created new project", "title", title, "prefix", prefix, "userId", m.userId)
+
+		m.app.Broadcast(RefreshProjectsMsg{})
+
 		return nil
 	}
 }
