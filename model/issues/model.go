@@ -9,6 +9,13 @@ import (
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
+type viewData struct {
+	issuesMap     map[int64]*issueAndRelations
+	users         []db.User  // list of all assignee users from all issues in this view
+	labels        []db.Label // list of all labels from all issues in this view
+	shallowIssues []db.Issue // list of all issues with a incoming relationship from all issues in this view
+}
+
 type Model struct {
 	app   *app.App
 	theme *tint.Tint
@@ -19,8 +26,9 @@ type Model struct {
 	userId    int64
 	projectId int64
 
-	project db.Project
-	views   []db.View
+	project  db.Project
+	views    []db.View
+	viewData map[int64]viewData // if a entry (for a view id) doesnt exist, it means it wasn't loaded
 }
 
 func New(userId int64, projectId int64, app *app.App, theme *tint.Tint) Model {
@@ -52,9 +60,11 @@ func (m Model) Rehydrate() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 	switch msg := msg.(type) {
-	case UpdateProjectMsg:
+	case UpdateProjectMsg: // theoretically, this only happens once.
 		m.project = msg.Project
 		m.views = msg.Views
+	case UpdateViewDataMsg:
+		m.viewData[msg.viewID] = msg.viewData
 	case model.ThemeChangedMsg:
 		m.theme = msg.NewTheme
 	}

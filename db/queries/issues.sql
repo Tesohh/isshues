@@ -29,10 +29,14 @@ INSERT INTO issue_labels (issue_id, label_id) VALUES ($1, $2);
 -- name: BulkInsertIssueRelationships :copyfrom
 INSERT INTO issue_relationships (from_issue_id, to_issue_id, category) VALUES ($1, $2, $3);
 
--- name: GetIssueExtras :many
-SELECT issues.id, sqlc.embed(labels), sqlc.embed(users) FROM issues
-JOIN issue_labels ON issue_labels.issue_id = issues.id
-JOIN labels ON issue_labels.label_id = labels.id
-JOIN issue_assignees ON issue_assignees.issue_id = issues.id
-JOIN users ON issue_assignees.user_id = users.id
-WHERE issues.id = $1;
+-- name: GetIssueAssigneeIDsBulk :many
+SELECT * FROM issue_assignees
+WHERE issue_id = ANY($1::bigint[]);
+
+-- name: GetIssueLabelIDsBulk :many
+SELECT * FROM issue_labels
+WHERE issue_id = ANY($1::bigint[]);
+
+-- name: GetIssueRelationshipsBulk :many
+SELECT * FROM issue_relationships
+WHERE from_issue_id = ANY($1::bigint[]);
