@@ -20,6 +20,7 @@ type Model struct {
 	projectId int64
 
 	project db.Project
+	views   []db.View
 }
 
 func New(userId int64, projectId int64, app *app.App, theme *tint.Tint) Model {
@@ -53,6 +54,7 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 	switch msg := msg.(type) {
 	case UpdateProjectMsg:
 		m.project = msg.Project
+		m.views = msg.Views
 	case model.ThemeChangedMsg:
 		m.theme = msg.NewTheme
 	}
@@ -60,7 +62,11 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	return "hello this is the view..."
+	s := "hello this is the view...\n"
+	for _, view := range m.views {
+		s += view.Name + "\n"
+	}
+	return s
 }
 
 // TODO:

@@ -16,6 +16,7 @@ var (
 
 type UpdateProjectMsg struct {
 	Project db.Project
+	Views   []db.View
 }
 
 func (m Model) LoadProjectCmd() tea.Msg {
@@ -47,5 +48,12 @@ func (m Model) LoadProjectCmd() tea.Msg {
 		return model.InternalErrMsg()
 	}
 
-	return UpdateProjectMsg{Project: project}
+	// load views
+	views, err := query.GetAllViewsInProject(ctx, m.projectId)
+	if err != nil {
+		log.Error("issues.Model.LoadProjectCmd: error when querying views", "err", err)
+		return model.InternalErrMsg()
+	}
+
+	return UpdateProjectMsg{Project: project, Views: views}
 }

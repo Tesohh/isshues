@@ -9,6 +9,7 @@ CREATE TYPE view_style AS ENUM ('panels', 'table');
 CREATE TABLE views (
 	id BIGSERIAL PRIMARY KEY,
 	project_id BIGINT NOT NULL REFERENCES projects(id),
+	name TEXT NOT NULL,
 
 	title TEXT, -- this is given to a LIKE
 
