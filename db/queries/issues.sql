@@ -2,6 +2,10 @@
 SELECT * FROM issues
 WHERE id = $1;
 
+-- name: GetIssuesByIDBulk :many
+SELECT * FROM issues
+WHERE id IN $1;
+
 -- name: GetIssueFromCode :one
 SELECT * FROM issues
 WHERE code = $1 

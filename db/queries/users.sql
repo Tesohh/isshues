@@ -2,6 +2,10 @@
 SELECT * FROM users
 WHERE id = $1;
 
+-- name: GetUsersByIDBulk :many
+SELECT * FROM users
+WHERE id IN $1;
+
 -- name: GetUserByUsernameLenient :one
 SELECT * FROM users
 WHERE shortname = $1
