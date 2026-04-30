@@ -4,7 +4,7 @@ WHERE id = $1;
 
 -- name: GetUsersByIDBulk :many
 SELECT * FROM users
-WHERE id IN $1;
+WHERE id = ANY($1::bigint[]);
 
 -- name: GetUserByUsernameLenient :one
 SELECT * FROM users

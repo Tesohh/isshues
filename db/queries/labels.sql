@@ -9,7 +9,7 @@ AND project_id = $2;
 
 -- name: GetLabelsByIDBulk :many
 SELECT * FROM labels
-WHERE id IN $1;
+WHERE id = ANY($1::bigint[]);
 
 -- name: InsertLabelBasic :one
 INSERT INTO labels (name, project_id)

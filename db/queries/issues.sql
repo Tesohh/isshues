@@ -4,7 +4,7 @@ WHERE id = $1;
 
 -- name: GetIssuesByIDBulk :many
 SELECT * FROM issues
-WHERE id IN $1;
+WHERE id = ANY($1::bigint[]);
 
 -- name: GetIssueFromCode :one
 SELECT * FROM issues
