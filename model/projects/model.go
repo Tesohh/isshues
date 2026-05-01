@@ -118,9 +118,9 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 
 	// set the correct height on the list
 	if m.ShowFullHelp() {
-		m.list.SetHeight(m.fullScreenHeight - len(m.FullHelp()))
+		m.list.SetHeight(m.fullScreenHeight - len(m.FullHelp()) - 1)
 	} else {
-		m.list.SetHeight(m.fullScreenHeight)
+		m.list.SetHeight(m.fullScreenHeight - 1)
 	}
 
 	var listCmd, formCmd tea.Cmd

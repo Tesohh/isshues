@@ -4,6 +4,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/Tesohh/isshues/model"
@@ -99,12 +100,19 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	s := lipgloss.NewStyle().MaxHeight(m.fullScreenHeight).MaxWidth(m.fullScreenWidth)
+	s := lipgloss.NewStyle().
+		Height(m.fullScreenHeight - 1).
+		MaxHeight(m.fullScreenHeight - 1).
+		Width(m.fullScreenWidth).
+		MaxWidth(m.fullScreenWidth)
 
-	return s.Render(lipgloss.JoinVertical(lipgloss.Top,
-		lipgloss.NewStyle().MarginBottom(1).Render(m.tabs.View()),
+	render := s.Render(lipgloss.JoinVertical(lipgloss.Top,
+		m.tabs.View(),
 		"alskjdflkjasfdl",
 	))
+	log.Info("size", "h", lipgloss.Height(render), "w", lipgloss.Width(render))
+
+	return render
 }
 
 // TODO:

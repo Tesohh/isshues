@@ -13,6 +13,9 @@ type Model struct {
 	App   *app.App
 	Theme *tint.Tint
 
+	Width  int
+	Height int
+
 	NavStack  []model.NavModel
 	StatusBar statusbar.Model
 

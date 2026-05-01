@@ -24,14 +24,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		cmds = append(cmds, m.PropagateNav(msg)...)
 
-		var sbcmd tea.Cmd
-		m.StatusBar, sbcmd = m.StatusBar.Update(msg)
-		cmds = append(cmds, sbcmd)
-
 	case projects.SwitchToProjectMsg:
 		issuesModel := issues.New(m.UserId, msg.ProjectId, m.App, m.Theme)
+
+		// also send a resize update so that the model instantly has the right size
+		newIssuesModel, _ := issuesModel.Update(tea.WindowSizeMsg{Height: m.Height, Width: m.Width})
+		issuesModel = newIssuesModel.(issues.Model)
+
 		cmds = append(cmds, issuesModel.Init())
 		m.NavStack = append(m.NavStack, issuesModel)
+
+	case tea.WindowSizeMsg:
+		cmds = append(cmds, m.PropagateNav(msg)...)
+		m.Height = msg.Height
+		m.Width = msg.Width
 
 	default:
 		var cmd tea.Cmd
