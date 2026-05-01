@@ -20,7 +20,7 @@ CREATE TABLE views (
 
 	labels_mode view_many_mode NOT NULL DEFAULT 'all',
 	
-	assignees_mode view_many_mode NOT NULL DEFAULT 'any',
+	assignees_mode view_many_mode NOT NULL DEFAULT 'any', -- WARN: maybe 'any' and empty assignees doesn't result in all issues being picked regardless of assignees!
 	assignees_include_viewer BOOLEAN NOT NULL DEFAULT false,
 
 	assignee_groups_mode view_many_mode NOT NULL DEFAULT 'any',

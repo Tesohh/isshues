@@ -58,3 +58,35 @@ permissions = ["write-issues", "read-issues"]
 name = "guests"
 mentionable = false
 permissions = ["read-issues"]
+
+# default views that are created with every project
+[[default_views]]
+name = "All open"
+statuses = ["todo", "progress"]
+
+[[default_views]]
+name = "My open"
+assignees_include_viewer = true
+statuses = ["todo", "progress"]
+
+[[default_views]]
+name = "Unassigned"
+labels_mode = "exact"
+statuses = ["todo", "progress"]
+
+# heres a sample default view that uses all filters and options
+# [[default_views]]
+# name = "sample"
+# title = "includes this text"
+# statuses = ["todo", "progress"]
+# priority = 99
+# priority_mode = "eq" # lt <, le <=, eq ==, ge >=, gt >
+# labels = ["feat"] # if any of these don't exist, creation fails
+# labels_mode = "any" # at least one label (from specified) must be present on issue
+# assignees = ["tesohh", "lallos"] # if any of these don't exist, creation fails
+# assignees_mode = "all" # all assignees in must be present on issue
+# assignees_groups = ["tesohh", "lallos"] # if any of these don't exist, creation fails
+# assignees_group_mode = "exact" # all assignee groups must be present on issue, and none other 
+# sort_by = "code" # code, edit_date, priority
+# sort_order = "asc" # asc, desc
+# style = "panels" # panels, table
