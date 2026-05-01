@@ -31,7 +31,6 @@ func GenerateViewQuery(view db.View, params ViewQueryParams) (string, []any) {
 	// TODO: allow user to see only issues they have permission to view
 
 	binds = append(binds, view.ProjectID)
-	// TODO: add other joins (for labels etc.) and EMBED them here
 	fmt.Fprintf(&b, "SELECT * FROM issues WHERE (issues.project_id = $%d)", len(binds))
 
 	if view.Title.Valid {
@@ -41,9 +40,9 @@ func GenerateViewQuery(view db.View, params ViewQueryParams) (string, []any) {
 		fmt.Fprintf(&b, " AND (issues.title ILIKE $%d ESCAPE '\\')", len(binds))
 	}
 
-	if view.Status.Valid {
-		binds = append(binds, view.Status.Status)
-		fmt.Fprintf(&b, " AND (issues.status = $%d)", len(binds))
+	if len(view.Statuses) > 0 {
+		binds = append(binds, view.Statuses)
+		fmt.Fprintf(&b, " AND (issues.status = any($%d::status[]))", len(binds))
 	}
 
 	if view.Priority.Valid {

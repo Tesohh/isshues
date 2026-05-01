@@ -13,7 +13,7 @@ CREATE TABLE views (
 
 	title TEXT, -- this is given to a LIKE
 
-	status status,
+	statuses status[], -- the "many mode" is `any` in this case
 
 	priority INTEGER,
 	priority_mode view_priority_mode NOT NULL DEFAULT 'eq',
