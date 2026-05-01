@@ -10,33 +10,8 @@ import (
 )
 
 var (
-	activeTabBorder = lipgloss.Border{
-		Top:         "─",
-		Bottom:      " ",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "╭",
-		TopRight:    "╮",
-		BottomLeft:  "┘",
-		BottomRight: "└",
-	}
-
-	tabBorder = lipgloss.Border{
-		Top:         "─",
-		Bottom:      "─",
-		Left:        "│",
-		Right:       "│",
-		TopLeft:     "╭",
-		TopRight:    "╮",
-		BottomLeft:  "┴",
-		BottomRight: "┴",
-	}
-
-	tabStyle = lipgloss.NewStyle().
-			Border(tabBorder, true).
-			Padding(0, 1)
-
-	activeTabStyle = tabStyle.Border(activeTabBorder, true)
+	tabStyle       = lipgloss.NewStyle().Padding(0, 1)
+	activeTabStyle = tabStyle
 
 	tabGapStyle = tabStyle.
 			BorderTop(false).
@@ -51,7 +26,6 @@ type Tab struct {
 	Title string
 }
 
-// TODO: take theme
 type Model struct {
 	width    int
 	selected int
@@ -109,9 +83,9 @@ func (m Model) View() string {
 
 	for i, tab := range m.tabs {
 		if i == m.selected {
-			out = append(out, activeTabStyle.Foreground(m.theme.Yellow).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
+			out = append(out, activeTabStyle.Background(m.theme.Purple).Foreground(m.theme.Bg).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
 		} else {
-			out = append(out, tabStyle.Render(string(nerdFontNumbers[i])+"  "+tab.Title))
+			out = append(out, tabStyle.Background(lipgloss.Darken(m.theme.Black, 0.5)).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
 		}
 	}
 	row := lipgloss.JoinHorizontal(lipgloss.Top, out...)

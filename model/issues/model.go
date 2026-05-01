@@ -66,7 +66,13 @@ func (m Model) Rehydrate() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 	cmds := []tea.Cmd{}
+
+	var tabCmd tea.Cmd
+	m.tabs, tabCmd = m.tabs.Update(msg)
+	cmds = append(cmds, tabCmd)
+
 	switch msg := msg.(type) {
+
 	case UpdateProjectMsg: // theoretically, this only happens once.
 		m.project = msg.Project
 		m.views = msg.Views
@@ -82,27 +88,12 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 
 	case UpdateViewDataMsg:
 		m.viewData[msg.viewID] = msg.viewData
-	case tea.KeyPressMsg:
-		r := msg.Key().Code
-		if r >= '0' && r <= '9' {
-			var cmd tea.Cmd
-			m.tabs, cmd = m.tabs.Update(msg)
-			cmds = append(cmds, cmd)
-		}
 	case tea.WindowSizeMsg:
 		m.fullScreenWidth = msg.Width
 		m.fullScreenHeight = msg.Height
 
-		var cmd tea.Cmd
-		m.tabs, cmd = m.tabs.Update(msg)
-		cmds = append(cmds, cmd)
-
 	case model.ThemeChangedMsg:
 		m.theme = msg.NewTheme
-
-		var cmd tea.Cmd
-		m.tabs, cmd = m.tabs.Update(msg)
-		cmds = append(cmds, cmd)
 	}
 	return m, nil
 }
