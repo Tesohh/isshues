@@ -75,10 +75,23 @@ type UpdateViewDataMsg struct {
 	viewData viewData
 }
 
+func (m Model) MakeLoadIssuesForSelectedViewCmd() func() tea.Msg {
+	id := m.tabs.SelectedID()
+	index := slices.IndexFunc(m.views, func(v db.View) bool {
+		return v.ID == id
+	})
+	if index == -1 {
+		return nil
+	}
+
+	return m.MakeLoadIssuesForViewCmd(m.views[index])
+}
+
 // also loads: labels, users (assignees), dependencies.
 func (m Model) MakeLoadIssuesForViewCmd(view db.View) func() tea.Msg {
 	return func() tea.Msg {
 		ctx := context.Background()
+		log.Info("loading issues", "userID", m.userId, "view.ID", view.ID, "view.Name", view.Name)
 
 		queryFail := func(err error, name string) model.ErrMsg {
 			log.Error("issues.Model.LoadIssueForViewCmd: error when querying", "table", name, "err", err)

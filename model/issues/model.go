@@ -1,10 +1,11 @@
 package issues
 
 import (
+	"fmt"
+
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/Tesohh/isshues/model"
@@ -45,13 +46,14 @@ func New(userId int64, projectId int64, app *app.App, theme *tint.Tint) Model {
 		userId:       userId,
 		projectId:    projectId,
 		tabs:         tabs.New(0, []tabs.Tab{}, theme),
+		viewData:     make(map[int64]viewData),
 	}
 
 	return m
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.LoadProjectCmd)
+	return m.LoadProjectCmd
 }
 
 func (m Model) Title() string {
@@ -87,8 +89,11 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 		m.tabs, cmd = m.tabs.Update(tabs.UpdateTabsMsg{Tabs: tabList})
 		cmds = append(cmds, cmd)
 
+		cmds = append(cmds, m.MakeLoadIssuesForSelectedViewCmd())
+
 	case UpdateViewDataMsg:
 		m.viewData[msg.viewID] = msg.viewData
+		fmt.Printf("%#v\n", m.viewData[msg.viewID])
 	case tea.WindowSizeMsg:
 		m.fullScreenWidth = msg.Width
 		m.fullScreenHeight = msg.Height
@@ -96,7 +101,7 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 	case model.ThemeChangedMsg:
 		m.theme = msg.NewTheme
 	}
-	return m, nil
+	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
@@ -110,7 +115,6 @@ func (m Model) View() string {
 		m.tabs.View(),
 		"alskjdflkjasfdl",
 	))
-	log.Info("size", "h", lipgloss.Height(render), "w", lipgloss.Width(render))
 
 	return render
 }
