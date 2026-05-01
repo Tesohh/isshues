@@ -8,7 +8,6 @@ import (
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	"github.com/Tesohh/isshues/cli"
-	"github.com/Tesohh/isshues/config"
 	"github.com/fsnotify/fsnotify"
 	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/joho/godotenv/autoload"
@@ -29,10 +28,6 @@ func main() {
 	viper.AddConfigPath(".")
 	viper.AddConfigPath("./.ignored/config") // for development purposes
 
-	config.ApplyDefaultConfig(viper)
-
-	err = viper.ReadInConfig()
-
 	var fileLookupError viperlib.ConfigFileNotFoundError
 	if err := viper.ReadInConfig(); err != nil {
 		if errors.As(err, &fileLookupError) {
@@ -41,6 +36,8 @@ func main() {
 			log.Fatal("no config file found, using default settings", "err", err)
 		}
 	}
+
+	log.Info("Welcome", "company.name", viper.Get("company.name"))
 
 	viper.OnConfigChange(func(e fsnotify.Event) {
 		log.Info("Config file changed:", "filename", e.Name)

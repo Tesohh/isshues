@@ -4,13 +4,17 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/Tesohh/isshues/config"
 	"github.com/spf13/viper"
 )
 
 func TestParsePriorityWithViper(t *testing.T) {
 	viper := viper.New()
-	config.ApplyDefaultConfig(viper)
+
+	viper.SetDefault("priorities.crit.value", 10)
+	viper.SetDefault("priorities.high.value", 5)
+	viper.SetDefault("priorities.med.value", 3)
+	viper.SetDefault("priorities.default.value", 1)
+	viper.SetDefault("priorities.low.value", 0)
 
 	t.Run("valid default path", func(t *testing.T) {
 		input := "+feat +frontend add Nuke"
