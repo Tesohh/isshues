@@ -3,9 +3,11 @@ package issues
 import (
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/Tesohh/isshues/model"
+	"github.com/Tesohh/isshues/model/tabs"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -21,10 +23,13 @@ type Model struct {
 	theme *tint.Tint
 
 	showFullHelp     bool
+	fullScreenWidth  int
 	fullScreenHeight int
 
 	userId    int64
 	projectId int64
+
+	tabs tabs.Model
 
 	project  db.Project
 	views    []db.View
@@ -38,6 +43,7 @@ func New(userId int64, projectId int64, app *app.App, theme *tint.Tint) Model {
 		showFullHelp: false,
 		userId:       userId,
 		projectId:    projectId,
+		tabs:         tabs.New(0, []tabs.Tab{}, theme),
 	}
 
 	return m
@@ -59,24 +65,55 @@ func (m Model) Rehydrate() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
+	cmds := []tea.Cmd{}
 	switch msg := msg.(type) {
 	case UpdateProjectMsg: // theoretically, this only happens once.
 		m.project = msg.Project
 		m.views = msg.Views
+
+		tabList := make([]tabs.Tab, 0, len(msg.Views))
+		for _, view := range msg.Views {
+			tabList = append(tabList, tabs.NewTab(view.ID, view.Name))
+		}
+
+		var cmd tea.Cmd
+		m.tabs, cmd = m.tabs.Update(tabs.UpdateTabsMsg{Tabs: tabList})
+		cmds = append(cmds, cmd)
+
 	case UpdateViewDataMsg:
 		m.viewData[msg.viewID] = msg.viewData
+	case tea.KeyPressMsg:
+		r := msg.Key().Code
+		if r >= '0' && r <= '9' {
+			var cmd tea.Cmd
+			m.tabs, cmd = m.tabs.Update(msg)
+			cmds = append(cmds, cmd)
+		}
+	case tea.WindowSizeMsg:
+		m.fullScreenWidth = msg.Width
+		m.fullScreenHeight = msg.Height
+
+		var cmd tea.Cmd
+		m.tabs, cmd = m.tabs.Update(msg)
+		cmds = append(cmds, cmd)
+
 	case model.ThemeChangedMsg:
 		m.theme = msg.NewTheme
+
+		var cmd tea.Cmd
+		m.tabs, cmd = m.tabs.Update(msg)
+		cmds = append(cmds, cmd)
 	}
 	return m, nil
 }
 
 func (m Model) View() string {
-	s := "hello this is the view...\n"
-	for _, view := range m.views {
-		s += view.Name + "\n"
-	}
-	return s
+	s := lipgloss.NewStyle().MaxHeight(m.fullScreenHeight).MaxWidth(m.fullScreenWidth)
+
+	return s.Render(lipgloss.JoinVertical(lipgloss.Top,
+		lipgloss.NewStyle().MarginBottom(1).Render(m.tabs.View()),
+		"alskjdflkjasfdl",
+	))
 }
 
 // TODO:
