@@ -94,6 +94,13 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 	case UpdateViewDataMsg:
 		m.viewData[msg.viewID] = msg.viewData
 		fmt.Printf("%#v\n", m.viewData[msg.viewID])
+
+	case tabs.SwitchTabMsg:
+		id := m.tabs.SelectedID()
+		if _, ok := m.viewData[id]; !ok {
+			cmds = append(cmds, m.MakeLoadIssuesForSelectedViewCmd())
+		}
+
 	case tea.WindowSizeMsg:
 		m.fullScreenWidth = msg.Width
 		m.fullScreenHeight = msg.Height

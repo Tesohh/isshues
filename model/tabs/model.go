@@ -55,6 +55,8 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case UpdateTabsMsg:
 		m.tabs = msg.Tabs
@@ -73,9 +75,10 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 
 			index := min(num-1, len(m.tabs)-1)
 			m.selected = index
+			cmd = SwitchTabCmd
 		}
 	}
-	return m, nil
+	return m, cmd
 }
 
 func (m Model) View() string {
