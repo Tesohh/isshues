@@ -87,6 +87,7 @@ statuses = ["todo", "progress"]
 # assignees_mode = "all" # all assignees in must be present on issue
 # assignees_groups = ["tesohh", "lallos"] # if any of these don't exist, creation fails
 # assignees_group_mode = "exact" # all assignee groups must be present on issue, and none other 
+# there is also an "ignore" mode, which doesn't filter at all
 # sort_by = "code" # code, edit_date, priority
 # sort_order = "asc" # asc, desc
 # style = "panels" # panels, table
