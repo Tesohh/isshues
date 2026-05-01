@@ -21,6 +21,10 @@ type manyFilter struct {
 
 // auxiliary function for GenerateViewQuery
 func appendManyFilter(b *strings.Builder, binds *[]any, viewID int64, f manyFilter) {
+	if f.mode == db.ViewManyModeIgnore {
+		return
+	}
+
 	*binds = append(*binds, viewID)
 	view_bind_idx := len(*binds)
 

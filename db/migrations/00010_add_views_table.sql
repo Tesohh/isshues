@@ -1,6 +1,6 @@
 -- +goose Up
 CREATE TYPE view_priority_mode AS ENUM ('lt', 'le', 'eq', 'ge', 'gt');
-CREATE TYPE view_many_mode AS ENUM ('any', 'all', 'exact');
+CREATE TYPE view_many_mode AS ENUM ('ignore', 'any', 'all', 'exact');
 CREATE TYPE view_sort_by AS ENUM ('code', 'edit_date', 'priority');
 CREATE TYPE view_sort_order AS ENUM ('ascending', 'descending');
 CREATE TYPE view_style AS ENUM ('panels', 'table');
@@ -18,12 +18,12 @@ CREATE TABLE views (
 	priority INTEGER,
 	priority_mode view_priority_mode NOT NULL DEFAULT 'eq',
 
-	labels_mode view_many_mode NOT NULL DEFAULT 'all',
+	labels_mode view_many_mode NOT NULL DEFAULT 'ignore',
 	
-	assignees_mode view_many_mode NOT NULL DEFAULT 'any', -- WARN: maybe 'any' and empty assignees doesn't result in all issues being picked regardless of assignees!
+	assignees_mode view_many_mode NOT NULL DEFAULT 'ignore',
 	assignees_include_viewer BOOLEAN NOT NULL DEFAULT false,
 
-	assignee_groups_mode view_many_mode NOT NULL DEFAULT 'any',
+	assignee_groups_mode view_many_mode NOT NULL DEFAULT 'ignore',
 
 	sort_by view_sort_by NOT NULL DEFAULT 'code',
 	sort_order view_sort_order NOT NULL DEFAULT 'ascending',
