@@ -37,6 +37,7 @@ func CreateProject(app *app.App, query *db.Queries, userId int64, title string, 
 		return fmt.Errorf("default_groups config error: %w", err)
 	}
 
+	groupMap := make(map[string]int64, len(defaultGroups))
 	for _, group := range defaultGroups {
 		params := db.InsertGroupParams{
 			Name:        pgtype.Text{String: group.Name, Valid: true},
@@ -48,6 +49,7 @@ func CreateProject(app *app.App, query *db.Queries, userId int64, title string, 
 		if err != nil {
 			return fmt.Errorf("group insertion error: %w", err)
 		}
+		groupMap[group.Name] = groupId
 
 		for _, permission := range group.Permissions {
 			err = query.GrantPermissionToGroup(ctx, db.GrantPermissionToGroupParams{
@@ -71,13 +73,14 @@ func CreateProject(app *app.App, query *db.Queries, userId int64, title string, 
 		}
 	}
 
-	// add default groups
+	// add default labels
 	var defaultLabels []config.DefaultLabel
 	err = app.Viper.UnmarshalKey("default_labels", &defaultLabels)
 	if err != nil {
 		return fmt.Errorf("default_labels config error: %w", err)
 	}
 
+	labelsMap := make(map[string]int64, len(defaultLabels))
 	for _, label := range defaultLabels {
 		params := db.InsertLabelParams{
 			Name:      label.Name,
@@ -86,9 +89,122 @@ func CreateProject(app *app.App, query *db.Queries, userId int64, title string, 
 			ProjectID: projectId,
 		}
 
-		_, err := query.InsertLabel(ctx, params)
+		label, err := query.InsertLabel(ctx, params)
 		if err != nil {
 			return fmt.Errorf("label insertion error: %w", err)
+		}
+
+		labelsMap[label.Name] = label.ID
+	}
+
+	// add default views
+	var defaultViews []config.DefaultView
+	err = app.Viper.UnmarshalKey("default_views", &defaultViews)
+	if err != nil {
+		return fmt.Errorf("default_views config error: %w", err)
+	}
+
+	for _, view := range defaultViews {
+		priority := 0
+		if view.Priority != nil {
+			priority = *view.Priority
+		}
+
+		priorityMode := db.ViewPriorityModeEq
+		if view.PriorityMode != "" {
+			priorityMode = view.PriorityMode
+		}
+
+		labelsMode := db.ViewManyModeIgnore
+		if view.LabelsMode != "" {
+			labelsMode = view.LabelsMode
+		}
+
+		assigneesMode := db.ViewManyModeIgnore
+		if view.LabelsMode != "" {
+			labelsMode = view.LabelsMode
+		}
+
+		assigneeGroupMode := db.ViewManyModeIgnore
+		if view.AssigneeGroupsMode != "" {
+			assigneeGroupMode = view.AssigneeGroupsMode
+		}
+
+		sortBy := db.ViewSortByCode
+		if view.SortBy != "" {
+			sortBy = view.SortBy
+		}
+
+		sortOrder := db.ViewSortOrderAscending
+		if view.SortOrder != "" {
+			sortOrder = view.SortOrder
+		}
+
+		style := db.ViewStylePanels
+		if view.Style != "" {
+			style = view.Style
+		}
+
+		// insert view itself
+		viewId, err := query.InsertView(ctx, db.InsertViewParams{
+			ProjectID:              projectId,
+			Name:                   view.Name,
+			Title:                  pgtype.Text{String: view.Title, Valid: view.Title != ""},
+			Statuses:               view.Statuses,
+			Priority:               pgtype.Int4{Int32: int32(priority), Valid: view.Priority != nil},
+			PriorityMode:           priorityMode,
+			LabelsMode:             labelsMode,
+			AssigneesMode:          assigneesMode,
+			AssigneesIncludeViewer: view.AssigneesIncludeViewer,
+			AssigneeGroupsMode:     assigneeGroupMode,
+			SortBy:                 sortBy,
+			SortOrder:              sortOrder,
+			Style:                  style,
+		})
+		if err != nil {
+			return fmt.Errorf("cannot insert default view: %w", err)
+		}
+
+		// get users in bulk and insert them
+		users, err := query.GetUsersByUsernameBulk(ctx, view.Assignees)
+		if err != nil {
+			return fmt.Errorf("cannot fetch users for view: %w", err)
+		}
+
+		userArgs := make([]db.BulkInsertViewAssigneesParams, 0, len(users))
+		for _, user := range users {
+			userArgs = append(userArgs, db.BulkInsertViewAssigneesParams{ViewID: viewId, UserID: user.ID})
+		}
+
+		_, err = query.BulkInsertViewAssignees(ctx, userArgs)
+		if err != nil {
+			return fmt.Errorf("cannot insert view assignees: %w", err)
+		}
+
+		// insert groups
+		groupArgs := make([]db.BulkInsertViewGroupAssigneesParams, 0)
+		for _, name := range view.AssigneeGroups {
+			if groupId, ok := groupMap[name]; ok {
+				groupArgs = append(groupArgs, db.BulkInsertViewGroupAssigneesParams{ViewID: viewId, GroupID: groupId})
+			}
+		}
+
+		_, err = query.BulkInsertViewGroupAssignees(ctx, groupArgs)
+		if err != nil {
+			return fmt.Errorf("cannot insert view group assignees: %w", err)
+		}
+
+		// insert labels
+		labelArgs := make([]db.BulkInsertViewLabelsParams, 0)
+		for _, name := range view.Labels {
+			if labelId, ok := labelsMap[name]; ok {
+				labelArgs = append(labelArgs, db.BulkInsertViewLabelsParams{ViewID: viewId, LabelID: labelId})
+			}
+		}
+
+		_, err = query.BulkInsertViewLabels(ctx, labelArgs)
+		if err != nil {
+			return fmt.Errorf("cannot insert view labels: %w", err)
 		}
 	}
 

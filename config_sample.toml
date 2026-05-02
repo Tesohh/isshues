@@ -59,7 +59,10 @@ name = "guests"
 mentionable = false
 permissions = ["read-issues"]
 
-# default views that are created with every project
+# Default views that are created with every project
+# Views are a powerful way to display issues to users. 
+# They describe many filters, a sorter, and a display style.
+# The filters are very powerful and configurable, but the following views will get you 90% of the way there.
 [[default_views]]
 name = "All open"
 statuses = ["todo", "progress"]
@@ -71,8 +74,12 @@ statuses = ["todo", "progress"]
 
 [[default_views]]
 name = "Unassigned"
-labels_mode = "exact"
+assignees_mode = "exact"
 statuses = ["todo", "progress"]
+
+[[default_views]]
+name = "Closed"
+statuses = ["done", "cancelled"]
 
 # heres a sample default view that uses all filters and options
 # [[default_views]]
@@ -84,10 +91,11 @@ statuses = ["todo", "progress"]
 # labels = ["feat"] # MUST all be default labels
 # labels_mode = "any" # at least one label (from specified) must be present on issue
 # assignees = ["tesohh", "lallos"] # MUST all be existing users 
+# assignees_include_viewer = false
 # assignees_mode = "all" # all assignees in must be present on issue
 # assignee_groups = ["admins"] # MUST all be default groups
 # assignee_group_mode = "exact" # all assignee groups must be present on issue, and none other 
-# there is also an "ignore" mode, which doesn't filter at all
+# # there is also an "ignore" mode, which doesn't filter at all
 # sort_by = "code" # code, edit_date, priority
-# sort_order = "asc" # asc, desc
+# sort_order = "ascending" # ascending, descending
 # style = "panels" # panels, table

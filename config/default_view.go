@@ -7,7 +7,7 @@ type DefaultView struct {
 	Title    string      `mapstructure:"title"`
 	Statuses []db.Status `mapstructure:"statuses"`
 
-	Priority     *int64              `mapstructure:"priority"`
+	Priority     *int                `mapstructure:"priority"`
 	PriorityMode db.ViewPriorityMode `mapstructure:"priority_mode"`
 
 	Labels     []string        `mapstructure:"labels"`

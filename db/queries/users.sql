@@ -6,6 +6,10 @@ WHERE id = $1;
 SELECT * FROM users
 WHERE id = ANY($1::bigint[]);
 
+-- name: GetUsersByUsernameBulk :many
+SELECT * FROM users
+WHERE username = ANY($1::text[]);
+
 -- name: GetUserByUsernameLenient :one
 SELECT * FROM users
 WHERE shortname = $1

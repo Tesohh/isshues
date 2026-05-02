@@ -1,25 +1,25 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"os"
 
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	"github.com/Tesohh/isshues/cli"
+	db_complex "github.com/Tesohh/isshues/db/complex"
 	"github.com/fsnotify/fsnotify"
-	"github.com/jackc/pgx/v5/pgxpool"
 	_ "github.com/joho/godotenv/autoload"
 	tint "github.com/lrstanley/bubbletint/v2"
 	viperlib "github.com/spf13/viper"
 )
 
 func main() {
-	conn, err := pgxpool.New(context.Background(), os.Getenv("DATABASE_URL"))
+	pool, err := db_complex.GetDbPool(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("cannot connect to database!", err)
 	}
+
 	viper := viperlib.New()
 	viper.SetConfigName("config")
 	viper.SetConfigType("toml")
@@ -46,6 +46,6 @@ func main() {
 
 	tint.NewDefaultRegistry()
 
-	app := app.NewApp(conn, viper, cli.RootCmd)
+	app := app.NewApp(pool, viper, cli.RootCmd)
 	app.Start()
 }
