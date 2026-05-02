@@ -138,11 +138,19 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 				return InternalErr
 			}
 
-			// show feedback and warnings
-			// TODO: put this in a reusable function
-			// TODO: use requested theme
+			// load user theme
+			settings, err := app.DB.GetUserSettings(ctx, userId)
+			if err != nil {
+				log.Error("settings query error", "err", err, "userId", userId)
+				return InternalErr
+			}
 
-			theme := tint.TintRosePine
+			theme, ok := tint.GetTint(settings.Theme)
+			if !ok {
+				return fmt.Errorf("%w: %s. go to https://lrstanley.github.io/bubbletint/ to find a list of supported themes", ThemeNotFoundErr, settings.Theme)
+			}
+
+			// show feedback and warnings
 
 			title := fmt.Sprintf("%s %s: %s %s",
 				issues.ComponentStatusCircle(&issue, theme),
