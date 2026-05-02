@@ -52,6 +52,17 @@ func ComponentTitle(issue *db.Issue, theme *tint.Tint) string {
 	return lipgloss.NewStyle().Foreground(theme.Fg).Render(issue.Title)
 }
 
+func ComponentDescription(issue *db.Issue, theme *tint.Tint) string {
+	mutedColor := lipgloss.Darken(theme.Fg, ComponentMutedDarkenFactor)
+	mutedStyle := lipgloss.NewStyle().Foreground(mutedColor)
+
+	if issue.Description.Valid {
+		return mutedStyle.Render("[...]")
+	}
+
+	return ""
+}
+
 func ComponentPriority(issue *db.Issue, theme *tint.Tint, viper *viper.Viper) []string {
 	var priorities config.Priorities
 	viper.UnmarshalKey("priorities", &priorities)

@@ -12,9 +12,8 @@ import (
 	"charm.land/wish/v2"
 	"github.com/Tesohh/isshues/action"
 	"github.com/Tesohh/isshues/app"
-	"github.com/Tesohh/isshues/common"
-	"github.com/Tesohh/isshues/config"
 	db "github.com/Tesohh/isshues/db/generated"
+	"github.com/Tesohh/isshues/model/issues"
 	"github.com/Tesohh/isshues/shorthand"
 	"github.com/charmbracelet/ssh"
 	"github.com/jackc/pgx/v5"
@@ -143,81 +142,31 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			// TODO: put this in a reusable function
 			// TODO: use requested theme
 
-			tint := tint.TintRosePine
+			theme := tint.TintRosePine
 
-			var priorities config.Priorities
-			app.Viper.UnmarshalKey("priorities", &priorities)
-			closestPriority, closestPriorityK := priorities.FindClosest(int(issue.Priority))
-
-			var (
-				mutedColor     = lipgloss.Darken(tint.Fg, 0.4)
-				mutedStyle     = lipgloss.NewStyle().Foreground(mutedColor)
-				emphStyle      = lipgloss.NewStyle().Foreground(lipgloss.Darken(tint.Purple, 0.2))
-				priorityStyle  = lipgloss.NewStyle().Foreground(common.KeyToColor(tint, closestPriority.ColorKey))
-				warningBgStyle = lipgloss.NewStyle().Background(tint.Yellow).Foreground(tint.Bg)
-				warningFgStyle = lipgloss.NewStyle().Foreground(tint.Yellow)
+			title := fmt.Sprintf("%s %s: %s %s",
+				issues.ComponentStatusCircle(&issue, theme),
+				issues.ComponentPrefixAndCode(&issue, &project, theme),
+				issues.ComponentTitle(&issue, theme),
+				issues.ComponentDescription(&issue, theme),
 			)
 
-			circleStr := common.MakeStatusCircle(tint, issue.Status)
-			serialStr := mutedStyle.Render(fmt.Sprintf("#%s-%d:", project.Prefix, issue.Code))
-			title := fmt.Sprintf("%s %s %s", circleStr, serialStr, issue.Title)
-
-			if issue.Description.Valid {
-				title += " " + mutedStyle.Render("[...]")
-			}
-
 			bottomStrs := []string{}
-
-			if closestPriorityK != "default" {
-				text := ""
-				if closestPriority.Value == int(issue.Priority) {
-					text = closestPriorityK
-				} else {
-					text = fmt.Sprint(issue.Priority)
-				}
-
-				bottomStrs = append(bottomStrs, priorityStyle.Render("!"+text))
-			}
-
-			for _, label := range allLabels {
-				style := lipgloss.NewStyle().Foreground(common.NullableKeyToColor(tint, mutedColor, label.ColorKey))
-
-				if label.Symbol.Valid {
-					bottomStrs = append(bottomStrs, style.Render("+"+label.Symbol.String+" "))
-				} else {
-					bottomStrs = append(bottomStrs, style.Render("+"+label.Name))
-				}
-			}
-
-			for _, dep := range product.Dependencies {
-				bottomStrs = append(bottomStrs, mutedStyle.Render(fmt.Sprintf(">%d", dep.Code)))
-			}
-
+			bottomStrs = append(bottomStrs, issues.ComponentPriority(&issue, theme, app.Viper)...)
+			bottomStrs = append(bottomStrs, issues.ComponentLabels(&issue, theme, allLabels)...)
+			bottomStrs = append(bottomStrs, issues.ComponentDependencies(&issue, theme, product.Dependencies)...)
+			bottomStrs = append(bottomStrs, issues.ComponentAssignees(&issue, theme, product.UserMentions, session.User())...)
 			// TODO: handle groups
-			for _, assignee := range product.UserMentions {
-				var style *lipgloss.Style
-
-				if assignee.Username == strings.ToLower(session.User()) {
-					style = &emphStyle
-				} else {
-					style = &mutedStyle
-				}
-
-				if assignee.Shortname.Valid {
-					bottomStrs = append(bottomStrs, style.Render(fmt.Sprintf("@%s", assignee.Shortname.String)))
-				} else {
-					bottomStrs = append(bottomStrs, style.Render(fmt.Sprintf("@%s", assignee.Username)))
-				}
-			}
 
 			bottom := strings.Join(bottomStrs, " ")
 
-			// TODO show warnings
+			warningBgStyle := lipgloss.NewStyle().Background(theme.Yellow).Foreground(theme.Bg)
+			warningFgStyle := lipgloss.NewStyle().Foreground(theme.Yellow)
 			warningStrs := []string{}
 			for _, warning := range product.Warnings {
 				plate := warningBgStyle.Render(" WARNING ")
 				text := warningFgStyle.Render(warning.Error())
-				warningStrs = append(warningStrs, fmt.Sprintf("%s: %s", plate, text))
+				warningStrs = append(warningStrs, fmt.Sprintf("%s %s", plate, text))
 			}
 
 			warnings := strings.Join(warningStrs, "\n")
