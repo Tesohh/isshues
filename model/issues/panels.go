@@ -30,12 +30,17 @@ type Panels struct {
 func NewPanels(
 	userId int64, app *app.App, project db.Project,
 ) Panels {
-	return Panels{
+	m := Panels{
 		app:     app,
 		userId:  userId,
 		project: project,
 		list:    list.New([]list.Item{}, list.NewDefaultDelegate(), 0, 0),
 	}
+
+	m.list.SetShowTitle(false)
+	m.list.SetShowHelp(false)
+
+	return m
 }
 
 func (m Panels) SetSize(width int, height int) Panels {
