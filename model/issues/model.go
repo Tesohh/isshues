@@ -41,7 +41,7 @@ func New(userId int64, projectId int64, app *app.App, theme *tint.Tint) Model {
 		showFullHelp: false,
 		userId:       userId,
 		projectId:    projectId,
-		tabs:         tabs.New(0, []tabs.Tab{}, theme),
+		tabs:         tabs.New(0, []tabs.Tab{}, theme, ""),
 		viewData:     make(map[int64]viewData),
 		viewModels:   make(map[int64]Panels),
 	}
@@ -96,6 +96,8 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 		var cmd tea.Cmd
 		m.tabs, cmd = m.tabs.Update(tabs.UpdateTabsMsg{Tabs: tabList})
 		cmds = append(cmds, cmd)
+
+		m.tabs = m.tabs.SetRightText(m.project.Title)
 
 		cmds = append(cmds, m.MakeLoadIssuesForSelectedViewCmd())
 

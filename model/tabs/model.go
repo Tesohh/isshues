@@ -27,22 +27,24 @@ type Tab struct {
 }
 
 type Model struct {
-	width    int
-	selected int
-	tabs     []Tab
-	theme    *tint.Tint
+	width     int
+	selected  int
+	tabs      []Tab
+	theme     *tint.Tint
+	rightText string
 }
 
 type UpdateTabsMsg struct {
 	Tabs []Tab
 }
 
-func New(width int, tabs []Tab, theme *tint.Tint) Model {
+func New(width int, tabs []Tab, theme *tint.Tint, rightText string) Model {
 	return Model{
-		width:    width,
-		selected: 0,
-		tabs:     tabs,
-		theme:    theme,
+		width:     width,
+		selected:  0,
+		tabs:      tabs,
+		theme:     theme,
+		rightText: rightText,
 	}
 }
 
@@ -67,7 +69,7 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 		m.theme = msg.NewTheme
 	case tea.KeyPressMsg:
 		r := msg.Key().Code
-		if r >= '0' && r <= '9' {
+		if msg.Mod == tea.ModCtrl && r >= '0' && r <= '9' {
 			num := int(r - '0')
 			if num == 0 {
 				num = 10
@@ -91,11 +93,18 @@ func (m Model) View() string {
 			out = append(out, tabStyle.Background(lipgloss.Darken(m.theme.Black, 0.5)).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
 		}
 	}
-	row := lipgloss.JoinHorizontal(lipgloss.Top, out...)
-	gap := tabGapStyle.Render(strings.Repeat(" ", max(0, m.width-lipgloss.Width(row)-2)))
-	row = lipgloss.JoinHorizontal(lipgloss.Bottom, row, gap)
 
-	return row
+	row := lipgloss.JoinHorizontal(lipgloss.Top, out...)
+
+	mutedStyle := lipgloss.NewStyle().Foreground(lipgloss.Darken(m.theme.Fg, 0.4))
+	rightText := mutedStyle.Render(m.rightText)
+
+	rowWidth := lipgloss.Width(row)
+	rightWidth := lipgloss.Width(m.rightText)
+	whitespaceWidth := max(m.width-rowWidth-rightWidth, 0)
+	whitespace := strings.Repeat(" ", whitespaceWidth)
+
+	return row + whitespace + rightText
 }
 
 // returns -1 if the selected tab does not exist (often, if there are no tabs)
@@ -105,4 +114,9 @@ func (m Model) SelectedID() int64 {
 	}
 
 	return m.tabs[m.selected].ID
+}
+
+func (m Model) SetRightText(rightText string) Model {
+	m.rightText = rightText
+	return m
 }
