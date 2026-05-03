@@ -2,23 +2,18 @@ package issues
 
 import (
 	"fmt"
+	"slices"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/Tesohh/isshues/model"
 	"github.com/Tesohh/isshues/model/tabs"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
-
-type viewData struct {
-	issuesMap     map[int64]*issueAndRelations
-	users         []db.User  // list of all assignee users from all issues in this view
-	labels        []db.Label // list of all labels from all issues in this view
-	shallowIssues []db.Issue // list of all issues with a incoming relationship from all issues in this view
-}
 
 type Model struct {
 	app   *app.App
@@ -33,9 +28,10 @@ type Model struct {
 
 	tabs tabs.Model
 
-	project  db.Project
-	views    []db.View
-	viewData map[int64]viewData // if a entry (for a view id) doesnt exist, it means it wasn't loaded
+	project    db.Project
+	views      []db.View          // TODO consider switching this to a map
+	viewData   map[int64]viewData // if a entry (for a view id) doesnt exist, it means it wasn't loaded
+	viewModels map[int64]Panels   // TEMP for now only panels, figure something out for tables in future (interface?)
 }
 
 func New(userId int64, projectId int64, app *app.App, theme *tint.Tint) Model {
@@ -47,6 +43,7 @@ func New(userId int64, projectId int64, app *app.App, theme *tint.Tint) Model {
 		projectId:    projectId,
 		tabs:         tabs.New(0, []tabs.Tab{}, theme),
 		viewData:     make(map[int64]viewData),
+		viewModels:   make(map[int64]Panels),
 	}
 
 	return m
@@ -65,6 +62,17 @@ func (m Model) Title() string {
 
 func (m Model) Rehydrate() tea.Cmd {
 	return nil
+}
+
+func (m Model) PropagateAllModels(msg tea.Msg) []tea.Cmd {
+	cmds := []tea.Cmd{}
+	for k, model := range m.viewModels {
+		var cmd tea.Cmd
+		m.viewModels[k], cmd = model.Update(msg)
+		cmds = append(cmds, cmd)
+	}
+
+	return cmds
 }
 
 func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
@@ -93,7 +101,28 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 
 	case UpdateViewDataMsg:
 		m.viewData[msg.viewID] = msg.viewData
-		fmt.Printf("%#v\n", m.viewData[msg.viewID])
+		log.Info("successfully loaded view", "viewID", msg.viewID)
+
+		// Create (or recreate) the actual view
+		index := slices.IndexFunc(m.views, func(v db.View) bool {
+			return v.ID == msg.viewID
+		})
+		if index == -1 {
+			log.Warn("updated tab not found somehow")
+			break
+		}
+
+		view := m.views[index]
+		if view.Style == db.ViewStylePanels {
+			var cmd tea.Cmd
+			m.viewModels[view.ID], cmd = NewPanels(m.userId, m.app, m.project).
+				SetSize(m.fullScreenWidth, m.fullScreenHeight-1).
+				SetTheme(m.theme).
+				SetViewAndData(view, msg.viewData)
+			cmds = append(cmds, cmd)
+		} else {
+			cmds = append(cmds, model.MakeErrCmd(fmt.Errorf("style %s unsupported", view.Style)))
+		}
 
 	case tabs.SwitchTabMsg:
 		id := m.tabs.SelectedID()
@@ -101,26 +130,42 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 			cmds = append(cmds, m.MakeLoadIssuesForSelectedViewCmd())
 		}
 
+	case tea.KeyPressMsg:
+		id := m.tabs.SelectedID()
+
+		var cmd tea.Cmd
+		if model, ok := m.viewModels[id]; ok {
+			m.viewModels[id], cmd = model.Update(msg)
+		}
+		cmds = append(cmds, cmd)
+
 	case tea.WindowSizeMsg:
 		m.fullScreenWidth = msg.Width
 		m.fullScreenHeight = msg.Height
+		cmds = append(cmds, m.PropagateAllModels(msg)...)
 
 	case model.ThemeChangedMsg:
 		m.theme = msg.NewTheme
+		cmds = append(cmds, m.PropagateAllModels(msg)...)
 	}
 	return m, tea.Batch(cmds...)
 }
 
 func (m Model) View() string {
-	s := lipgloss.NewStyle().
+	style := lipgloss.NewStyle().
 		Height(m.fullScreenHeight - 1).
 		MaxHeight(m.fullScreenHeight - 1).
 		Width(m.fullScreenWidth).
 		MaxWidth(m.fullScreenWidth)
 
-	render := s.Render(lipgloss.JoinVertical(lipgloss.Top,
+	viewRender := ""
+	if viewModel, ok := m.viewModels[m.tabs.SelectedID()]; ok {
+		viewRender = viewModel.View()
+	}
+
+	render := style.Render(lipgloss.JoinVertical(lipgloss.Top,
 		m.tabs.View(),
-		"alskjdflkjasfdl",
+		viewRender,
 	))
 
 	return render

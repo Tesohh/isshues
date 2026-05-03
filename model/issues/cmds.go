@@ -3,7 +3,6 @@ package issues
 import (
 	"context"
 	"errors"
-	"maps"
 	"slices"
 
 	tea "charm.land/bubbletea/v2"
@@ -70,6 +69,14 @@ type issueAndRelations struct {
 	relationshipToIssueIDs []int64
 }
 
+type viewData struct {
+	issuesMap        map[int64]*issueAndRelations
+	issuesOrderedIDs []int64            // maps are by design unordered; which means we have to store the order somewhere..
+	users            map[int64]db.User  // list of all assignee users from all issues in this view
+	labels           map[int64]db.Label // list of all labels from all issues in this view
+	shallowIssues    map[int64]db.Issue // list of all issues with a incoming relationship from all issues in this view
+}
+
 type UpdateViewDataMsg struct {
 	viewID   int64
 	viewData viewData
@@ -98,30 +105,24 @@ func (m Model) MakeLoadIssuesForViewCmd(view db.View) func() tea.Msg {
 			return model.ErrInternalMsg()
 		}
 
-		// tx, err := m.app.DBPool.Begin(ctx)
-		// if err != nil {
-		// 	log.Error("issues.Model.LoadProjectCmd: cannot start transaction", "err", err)
-		// 	return model.InternalErrMsg()
-		// }
-		// defer tx.Rollback(ctx)
-
 		queryStr, binds := dbmore.GenerateViewQuery(view, dbmore.ViewQueryParams{ViewerUserID: m.userId})
 		issues, err := action.RunViewQuery(m.app, m.app.DBPool, queryStr, binds)
 		if err != nil {
 			return queryFail(err, "views")
 		}
 
+		issueOrderedIDs := make([]int64, 0, len(issues))
 		issueMap := make(map[int64]*issueAndRelations, len(issues))
 		for _, issue := range issues {
+			issueOrderedIDs = append(issueOrderedIDs, issue.ID)
 			issueMap[issue.ID] = &issueAndRelations{issue: issue}
 		}
-		issueIDs := slices.Collect(maps.Keys(issueMap))
 
 		// load: assignee, label, relationships IDs in bulk (all issues at the same time)
 		// put them into the issue map
 		// and take their ID for later querying
 
-		issueAssignees, err := m.app.DB.GetIssueAssigneeIDsBulk(ctx, issueIDs)
+		issueAssignees, err := m.app.DB.GetIssueAssigneeIDsBulk(ctx, issueOrderedIDs)
 		if err != nil {
 			return queryFail(err, "issue_assignees")
 		}
@@ -132,7 +133,7 @@ func (m Model) MakeLoadIssuesForViewCmd(view db.View) func() tea.Msg {
 			issueAssigneeIDs = append(issueAssigneeIDs, issueAssignee.UserID)
 		}
 
-		issueLabels, err := m.app.DB.GetIssueLabelIDsBulk(ctx, issueIDs)
+		issueLabels, err := m.app.DB.GetIssueLabelIDsBulk(ctx, issueOrderedIDs)
 		if err != nil {
 			return queryFail(err, "issue_labels")
 		}
@@ -143,7 +144,7 @@ func (m Model) MakeLoadIssuesForViewCmd(view db.View) func() tea.Msg {
 			issueLabelIDs = append(issueLabelIDs, issueLabel.LabelID)
 		}
 
-		issueRelationships, err := m.app.DB.GetIssueRelationshipsBulk(ctx, issueIDs)
+		issueRelationships, err := m.app.DB.GetIssueRelationshipsBulk(ctx, issueOrderedIDs)
 		if err != nil {
 			return queryFail(err, "issue_relationships")
 		}
@@ -155,26 +156,41 @@ func (m Model) MakeLoadIssuesForViewCmd(view db.View) func() tea.Msg {
 		}
 
 		// load: assignee users, labels, relationship issues (shallowly)
-		users, err := m.app.DB.GetUsersByIDBulk(ctx, issueAssigneeIDs)
+		usersList, err := m.app.DB.GetUsersByIDBulk(ctx, issueAssigneeIDs)
 		if err != nil {
 			return queryFail(err, "users")
 		}
-		labels, err := m.app.DB.GetLabelsByIDBulk(ctx, issueLabelIDs)
+		users := make(map[int64]db.User, len(usersList))
+		for _, user := range usersList {
+			users[user.ID] = user
+		}
+
+		labelsList, err := m.app.DB.GetLabelsByIDBulk(ctx, issueLabelIDs)
 		if err != nil {
 			return queryFail(err, "labels")
 		}
-		shallowIssues, err := m.app.DB.GetIssuesByIDBulk(ctx, issueRelationshipToIssueIDs)
+		labels := make(map[int64]db.Label, len(labelsList))
+		for _, label := range labelsList {
+			labels[label.ID] = label
+		}
+
+		shallowIssuesList, err := m.app.DB.GetIssuesByIDBulk(ctx, issueRelationshipToIssueIDs)
 		if err != nil {
 			return queryFail(err, "issues (shallow relationships)")
+		}
+		shallowIssues := make(map[int64]db.Issue, len(shallowIssuesList))
+		for _, shallowIssue := range shallowIssuesList {
+			shallowIssues[shallowIssue.ID] = shallowIssue
 		}
 
 		return UpdateViewDataMsg{
 			viewID: view.ID,
 			viewData: viewData{
-				issuesMap:     issueMap,
-				users:         users,
-				labels:        labels,
-				shallowIssues: shallowIssues,
+				issuesMap:        issueMap,
+				issuesOrderedIDs: issueOrderedIDs,
+				users:            users,
+				labels:           labels,
+				shallowIssues:    shallowIssues,
 			},
 		}
 	}

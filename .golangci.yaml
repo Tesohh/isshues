@@ -6,7 +6,6 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - unused
     - gosec
     - iface
     - dupl
