@@ -95,7 +95,7 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			}
 
 			// collect ids (if only we had .iter().map()...)
-			allLabels := append(newLabels, product.Labels...)
+			allLabels := append(newLabels, product.Labels...) //nolint:gocritic
 			labelIds := make([]int64, 0, len(allLabels))
 			for _, label := range allLabels {
 				labelIds = append(labelIds, label.ID)

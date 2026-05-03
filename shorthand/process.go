@@ -55,6 +55,7 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 	// figure out which mentions are a. Users b. Groups c. Users and groups that don't exist and thus must be discarded
 	if !slices.Contains(captures.Mentions, "NOBODY") {
 		if len(captures.Mentions) == 0 {
+			// add the recruiter as an assignee in case noone was mentioned
 			user, err := app.DB.GetUserByID(ctx, userId)
 			if err != nil {
 				return result, err
@@ -73,17 +74,19 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 					continue
 				}
 
+				// then in case the user doesn't exist, try looking for a group...
 				group, err := app.DB.GetGroupByName(ctx, db.GetGroupByNameParams{
 					Name:      pgtype.Text{String: mention, Valid: true},
 					ProjectID: projectId,
 				})
-				if err != nil && err != pgx.ErrNoRows {
-					return result, err
-				} else if err == pgx.ErrNoRows {
+				switch err {
+				case pgx.ErrNoRows:
 					// no user or group was found, warn
 					result.Warnings = append(result.Warnings, fmt.Errorf("%w with name: %s", ErrWarningMentionFailed, mention))
-				} else if err == nil {
+				case nil:
 					result.GroupMentions = append(result.GroupMentions, group)
+				default:
+					return result, err
 				}
 			}
 		}
@@ -100,13 +103,15 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 			ProjectID: projectId,
 		})
 
-		if err != nil && err != pgx.ErrNoRows {
-			return result, err
-		} else if err == pgx.ErrNoRows {
+		switch err {
+		case pgx.ErrNoRows:
 			result.Warnings = append(result.Warnings, fmt.Errorf("%w with code: %d", ErrWarningIssueNotFound, code))
-		} else if err == nil {
+		case nil:
 			result.Dependencies = append(result.Dependencies, issue)
+		default:
+			return result, err
 		}
+
 	}
 
 	// fetch labels
@@ -125,31 +130,16 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 			ProjectID: projectId,
 		})
 
-		if err != nil && err != pgx.ErrNoRows {
-			return result, err
-		} else if err == pgx.ErrNoRows {
+		switch err {
+		case pgx.ErrNoRows:
 			// if user has `create-label` permission, then create the label
 			result.PendingLabels = append(result.PendingLabels, strings.ToLower(labelName))
-
-			// if hasCreateLabelPermission {
-			// 	// create the label
-			// 	label, err = app.DB.InsertLabelBasic(ctx, db.InsertLabelBasicParams{
-			// 		Name:      labelName,
-			// 		ProjectID: projectId,
-			// 	})
-			// 	if err != nil {
-			// 		log.Error("error while creating new label when processing shorthand", "labelName", labelName, "projectId", projectId, "err", err)
-			// 		result.Warnings = append(result.Warnings, WarningInternalError)
-			// 	}
-			// 	// TODO: broadcast RefreshLabels msg
-			//
-			// 	result.Labels = append(result.Labels, label)
-			// } else {
-			// 	result.Warnings = append(result.Warnings, fmt.Errorf("%w. label: %s", WarningLabelNotFoundAndNoPermission, labelName))
-			// }
-		} else if err == nil {
+		case nil:
 			result.Labels = append(result.Labels, label)
+		default:
+			return result, err
 		}
+
 	}
 
 	// check viper for Priority. if there is any problem, set the priority to 1 and warn.
@@ -172,33 +162,33 @@ func parsePriorityWithViper(captures []string, viper *viper.Viper) (int, error) 
 		}
 
 		return defaultPriority.Value, nil
-	} else {
-		var priorities config.Priorities
-		err := viper.UnmarshalKey("priorities", &priorities)
-		if err != nil {
-			log.Warn("config error, in 'priorities', with captures path. defaulting to 1", "err", err)
-			return 1, ErrWarningInternalErrorDefaulting
-		}
-
-		// in case the actual string was requested
-		target := captures[len(captures)-1]
-		if priority, ok := priorities[target]; ok {
-			return priority.Value, nil
-		}
-
-		// in case an integer was (hopefully) requested
-		if value, err := strconv.Atoi(target); err == nil {
-			return value, nil
-		}
-
-		// the priority was invalid, default to 1 and give a useful warning
-		keys := make([]string, 0, len(priorities))
-		for k := range priorities {
-			keys = append(keys, k)
-		}
-
-		options := strings.Join(keys, ", ")
-
-		return 1, fmt.Errorf("%w. must be an integer, or one of (%s)", ErrWarningInvalidPriority, options)
 	}
+
+	var priorities config.Priorities
+	err := viper.UnmarshalKey("priorities", &priorities)
+	if err != nil {
+		log.Warn("config error, in 'priorities', with captures path. defaulting to 1", "err", err)
+		return 1, ErrWarningInternalErrorDefaulting
+	}
+
+	// in case the actual string was requested
+	target := captures[len(captures)-1]
+	if priority, ok := priorities[target]; ok {
+		return priority.Value, nil
+	}
+
+	// in case an integer was (hopefully) requested
+	if value, err := strconv.Atoi(target); err == nil {
+		return value, nil
+	}
+
+	// the priority was invalid, default to 1 and give a useful warning
+	keys := make([]string, 0, len(priorities))
+	for k := range priorities {
+		keys = append(keys, k)
+	}
+
+	options := strings.Join(keys, ", ")
+
+	return 1, fmt.Errorf("%w. must be an integer, or one of (%s)", ErrWarningInvalidPriority, options)
 }

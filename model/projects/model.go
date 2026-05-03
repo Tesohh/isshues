@@ -16,7 +16,9 @@ import (
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
-var ErrNotAuthorizedCreate = errors.New("missing create-projects global permission")
+var (
+	ErrNotAuthorizedCreate = errors.New("missing create-projects global permission")
+)
 
 type Model struct {
 	app   *app.App
@@ -29,17 +31,17 @@ type Model struct {
 	showFullHelp     bool
 	fullScreenHeight int
 
-	userId int64
+	userID int64
 }
 
-func New(userId int64, app *app.App, theme *tint.Tint) Model {
+func New(userID int64, app *app.App, theme *tint.Tint) Model {
 	m := Model{
 		projects:     []db.Project{},
 		list:         list.New([]list.Item{}, itemDelegate{theme}, 0, 0),
 		app:          app,
 		theme:        theme,
 		showFullHelp: false,
-		userId:       userId,
+		userID:       userID,
 	}
 
 	m.list.Title = "Projects"
@@ -87,32 +89,36 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 		}
 
 	case tea.KeyPressMsg:
-		if msg.String() == "?" && m.creationForm == nil {
-			m.showFullHelp = !m.showFullHelp
-		} else if msg.String() == "enter" && m.creationForm == nil {
-			i := m.list.GlobalIndex()
-			cmd = m.MakeSwitchToProjectCmd(m.projects[i].ID)
-		} else if msg.String() == "+" && m.creationForm == nil {
-			ctx := context.Background()
-			// TODO: do this in a tea.Cmd
-			hasPermission, err := m.app.DB.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
-				UserID:             m.userId,
-				GlobalPermissionID: "create-projects",
-			})
+		if m.creationForm == nil {
+			switch msg.String() {
+			case "?":
+				m.showFullHelp = !m.showFullHelp
+			case "enter":
+				i := m.list.GlobalIndex()
+				cmd = m.MakeSwitchToProjectCmd(m.projects[i].ID)
 
-			if err != nil {
-				cmd = model.MakeErrCmd(err)
-				break
+			case "+":
+				ctx := context.Background()
+				// TODO: do this in a tea.Cmd
+				hasPermission, err := m.app.DB.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
+					UserID:             m.userID,
+					GlobalPermissionID: "create-projects",
+				})
+
+				if err != nil {
+					cmd = model.MakeErrCmd(err)
+					break
+				}
+
+				if !hasPermission {
+					cmd = model.MakeErrCmd(ErrNotAuthorizedCreate)
+					break
+				}
+
+				m.creationForm = MakeForm(m.theme)
+				cmd = m.creationForm.Init()
+				formIsNew = true
 			}
-
-			if !hasPermission {
-				cmd = model.MakeErrCmd(ErrNotAuthorizedCreate)
-				break
-			}
-
-			m.creationForm = MakeForm(m.theme)
-			cmd = m.creationForm.Init()
-			formIsNew = true
 		}
 	}
 

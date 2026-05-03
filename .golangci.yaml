@@ -15,8 +15,12 @@ linters:
     - nestif
     - decorder
     - makezero
-    - ireturn
     - revive
     - misspell
     - unconvert
     - unparam
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true

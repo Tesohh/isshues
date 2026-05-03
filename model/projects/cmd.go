@@ -28,9 +28,9 @@ func (m Model) FetchProjectsCmd() tea.Msg {
 	log.Info("Fetching projects")
 
 	ctx := context.Background()
-	projects, err := m.app.GetDB().GetUserProjectMemberships(ctx, m.userId)
+	projects, err := m.app.GetDB().GetUserProjectMemberships(ctx, m.userID)
 	if err != nil {
-		log.Error("GetUserProjectMemberships error", "err", err, "userId", m.userId)
+		log.Error("GetUserProjectMemberships error", "err", err, "userId", m.userID)
 
 		// TODO: return the error as a message
 		return nil
@@ -48,7 +48,7 @@ func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 		defer func() { _ = tx.Rollback(ctx) }()
 		query := db.New(tx)
 
-		hasPermission, err := query.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{UserID: m.userId, GlobalPermissionID: "create-projects"})
+		hasPermission, err := query.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{UserID: m.userID, GlobalPermissionID: "create-projects"})
 		if err != nil {
 			return model.ErrMsg{Err: err} // TODO: show "internal error"
 		}
@@ -57,7 +57,7 @@ func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 			return model.ErrMsg{Err: ErrNotAuthorizedCreate}
 		}
 
-		err = action.CreateProject(m.app, query, m.userId, title, prefix)
+		err = action.CreateProject(m.app, query, m.userID, title, prefix)
 		if err != nil {
 			return model.ErrMsg{Err: err} // TODO: log error and show internal error
 		}
@@ -67,7 +67,7 @@ func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 			return model.ErrMsg{Err: err} // TODO: show "internal error"
 		}
 
-		log.Info("created new project", "title", title, "prefix", prefix, "userId", m.userId)
+		log.Info("created new project", "title", title, "prefix", prefix, "userId", m.userID)
 
 		m.app.Broadcast(RefreshProjectsMsg{})
 
@@ -78,7 +78,7 @@ func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 func (m Model) HasCreatePermissionCmd() tea.Msg {
 	ctx := context.Background()
 	hasPermission, _ := m.app.DB.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
-		UserID:             m.userId,
+		UserID:             m.userID,
 		GlobalPermissionID: "create-projects",
 	})
 
