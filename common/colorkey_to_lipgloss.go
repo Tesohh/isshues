@@ -8,6 +8,7 @@ import (
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
+// KeyToColor transforms a color key (found usually in configs or database entries) into the correct theme's color
 func KeyToColor(theme *tint.Tint, key string) color.Color {
 	switch strings.TrimSpace(strings.ToLower(key)) {
 	case "fg":
@@ -53,6 +54,7 @@ func KeyToColor(theme *tint.Tint, key string) color.Color {
 	}
 }
 
+// NullableKeyToColor is a wrapper around KeyToColor for `pgtype.Text` which returns a `defaultColor` if `!key.Valid`
 func NullableKeyToColor(theme *tint.Tint, defaultColor color.Color, key pgtype.Text) color.Color {
 	if !key.Valid || (key.Valid && key.String == "") {
 		return defaultColor
