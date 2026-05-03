@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"net"
 	"os"
 	"os/signal"
@@ -10,13 +9,11 @@ import (
 	"time"
 
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
 	"charm.land/wish/v2"
 	"charm.land/wish/v2/activeterm"
 	"charm.land/wish/v2/bubbletea"
 	"charm.land/wish/v2/logging"
-	"github.com/Tesohh/isshues/common"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/charmbracelet/ssh"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -111,11 +108,6 @@ func (a *App) MakeProgramHandler(rootCmd isshuesCmd) func(session ssh.Session) *
 		var prog *tea.Program
 
 		session.PublicKey()
-
-		versionText := fmt.Sprintf("(isshues version %s)", common.GetVersion())
-		versionText = lipgloss.NewStyle().Foreground(lipgloss.Darken(lipgloss.White, 0.3)).Render(versionText)
-
-		// wish.Printf(session, "%s %s\n", config.MakeWaterMark(a.Viper, ), versionText)
 
 		rootCmd := rootCmd(session, a, &prog)
 		rootCmd.SetArgs(session.Command())

@@ -45,7 +45,7 @@ func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 		if err != nil {
 			return model.ErrMsg{Err: err} // TODO: show "internal error"
 		}
-		defer tx.Rollback(ctx)
+		defer func() { _ = tx.Rollback(ctx) }()
 		query := db.New(tx)
 
 		hasPermission, err := query.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{UserID: m.userId, GlobalPermissionID: "create-projects"})
@@ -54,7 +54,7 @@ func (m Model) MakeCreateProjectCmd(title, prefix string) func() tea.Msg {
 		}
 
 		if !hasPermission {
-			return model.ErrMsg{Err: NotAuthorizedCreateErr}
+			return model.ErrMsg{Err: ErrNotAuthorizedCreate}
 		}
 
 		err = action.CreateProject(m.app, query, m.userId, title, prefix)

@@ -1,0 +1,22 @@
+version: "2"
+
+linters:
+  enable: 
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - gosec
+    - iface
+    - dupl
+    - gocritic
+    - modernize
+    - nestif
+    - decorder
+    - makezero
+    - ireturn
+    - revive
+    - misspell
+    - unconvert
+    - unparam

@@ -18,12 +18,12 @@ import (
 )
 
 var (
-	WarningMentionFailed                = errors.New("no user (lenient) or group (exact) found")
-	WarningIssueNotFound                = errors.New("no issue found")
-	WarningLabelNotFoundAndNoPermission = errors.New("no label found, and you lack the `create-labels` permission to create a new one")
-	WarningInternalError                = errors.New("internal error. tell your admin!")
-	WarningInternalErrorDefaulting      = errors.New("internal error. tell your admin! defaulting to priority 1")
-	WarningInvalidPriority              = errors.New("invalid priority")
+	ErrWarningMentionFailed                = errors.New("no user (lenient) or group (exact) found")
+	ErrWarningIssueNotFound                = errors.New("no issue found")
+	ErrWarningLabelNotFoundAndNoPermission = errors.New("no label found, and you lack the `create-labels` permission to create a new one")
+	ErrWarningInternalError                = errors.New("internal error. tell your admin")
+	ErrWarningInternalErrorDefaulting      = errors.New("internal error. tell your admin! defaulting to priority 1")
+	ErrWarningInvalidPriority              = errors.New("invalid priority")
 )
 
 type ShorthandResults struct {
@@ -81,7 +81,7 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 					return result, err
 				} else if err == pgx.ErrNoRows {
 					// no user or group was found, warn
-					result.Warnings = append(result.Warnings, fmt.Errorf("%w with name: %s", WarningMentionFailed, mention))
+					result.Warnings = append(result.Warnings, fmt.Errorf("%w with name: %s", ErrWarningMentionFailed, mention))
 				} else if err == nil {
 					result.GroupMentions = append(result.GroupMentions, group)
 				}
@@ -103,7 +103,7 @@ func Process(captures parserCaptures, app *app.App, projectId int64, userId int6
 		if err != nil && err != pgx.ErrNoRows {
 			return result, err
 		} else if err == pgx.ErrNoRows {
-			result.Warnings = append(result.Warnings, fmt.Errorf("%w with code: %d", WarningIssueNotFound, code))
+			result.Warnings = append(result.Warnings, fmt.Errorf("%w with code: %d", ErrWarningIssueNotFound, code))
 		} else if err == nil {
 			result.Dependencies = append(result.Dependencies, issue)
 		}
@@ -168,7 +168,7 @@ func parsePriorityWithViper(captures []string, viper *viper.Viper) (int, error) 
 		err := viper.UnmarshalKey("priorities.default", &defaultPriority)
 		if err != nil {
 			log.Warn("config error, in 'priorities', with default path. (probably priorities.default is not defined). defaulting to 1", "err", err)
-			return 1, WarningInternalErrorDefaulting
+			return 1, ErrWarningInternalErrorDefaulting
 		}
 
 		return defaultPriority.Value, nil
@@ -177,7 +177,7 @@ func parsePriorityWithViper(captures []string, viper *viper.Viper) (int, error) 
 		err := viper.UnmarshalKey("priorities", &priorities)
 		if err != nil {
 			log.Warn("config error, in 'priorities', with captures path. defaulting to 1", "err", err)
-			return 1, WarningInternalErrorDefaulting
+			return 1, ErrWarningInternalErrorDefaulting
 		}
 
 		// in case the actual string was requested
@@ -199,6 +199,6 @@ func parsePriorityWithViper(captures []string, viper *viper.Viper) (int, error) 
 
 		options := strings.Join(keys, ", ")
 
-		return 1, fmt.Errorf("%w. must be an integer, or one of (%s)", WarningInvalidPriority, options)
+		return 1, fmt.Errorf("%w. must be an integer, or one of (%s)", ErrWarningInvalidPriority, options)
 	}
 }

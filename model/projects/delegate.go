@@ -24,7 +24,7 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		return
 	}
 
-	str := fmt.Sprintf("%s", i.Title())
+	str := i.Title()
 
 	itemStyle := lipgloss.NewStyle().Foreground(d.theme.Fg).PaddingLeft(4)
 	selectedStyle := lipgloss.NewStyle().Foreground(d.theme.Purple).PaddingLeft(2)
@@ -36,5 +36,5 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 		}
 	}
 
-	fmt.Fprint(w, fn(str))
+	_, _ = fmt.Fprint(w, fn(str))
 }

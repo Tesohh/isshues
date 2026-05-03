@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	ThemeNotFoundErr = errors.New("theme not found")
+	ErrThemeNotFound = errors.New("theme not found")
 )
 
 func RootCmd(session ssh.Session, app *app.App, progPtr **tea.Program) *cobra.Command {
@@ -28,7 +28,7 @@ func RootCmd(session ssh.Session, app *app.App, progPtr **tea.Program) *cobra.Co
 
 			userId, ok := app.SessionIdToUserIds[session.Context().SessionID()]
 			if !ok {
-				return errors.New("your userid was not found in the session map. might be an auth issue.")
+				return errors.New("your userid was not found in the session map. might be an auth issue")
 			}
 
 			// // TODO: don't hardcode this
@@ -37,12 +37,12 @@ func RootCmd(session ssh.Session, app *app.App, progPtr **tea.Program) *cobra.Co
 			settings, err := app.DB.GetUserSettings(ctx, userId)
 			if err != nil {
 				log.Error("settings query error", "err", err, "userId", userId)
-				return InternalErr
+				return ErrInternal
 			}
 
 			theme, ok := tint.GetTint(settings.Theme)
 			if !ok {
-				return fmt.Errorf("%w: %s. go to https://lrstanley.github.io/bubbletint/ to find a list of supported themes", ThemeNotFoundErr, settings.Theme)
+				return fmt.Errorf("%w: %s. go to https://lrstanley.github.io/bubbletint/ to find a list of supported themes", ErrThemeNotFound, settings.Theme)
 			}
 
 			model := root.New(app, userId, theme)

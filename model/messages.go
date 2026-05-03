@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	InternalErr = errors.New("internal error")
+	ErrInternal = errors.New("internal error")
 )
 
 type ThemeChangedMsg struct {
@@ -19,8 +19,8 @@ type ErrMsg struct {
 	Err error
 }
 
-func InternalErrMsg() ErrMsg {
-	return ErrMsg{Err: InternalErr}
+func ErrInternalMsg() ErrMsg {
+	return ErrMsg{Err: ErrInternal}
 }
 
 func MakeErrCmd(err error) func() tea.Msg {

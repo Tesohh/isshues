@@ -65,7 +65,7 @@ func ComponentDescription(issue *db.Issue, theme *tint.Tint) string {
 
 func ComponentPriority(issue *db.Issue, theme *tint.Tint, viper *viper.Viper) []string {
 	var priorities config.Priorities
-	viper.UnmarshalKey("priorities", &priorities)
+	_ = viper.UnmarshalKey("priorities", &priorities) // WARN ignored error, might be a problem?
 	closestPriority, closestPriorityK := priorities.FindClosest(int(issue.Priority))
 
 	var (

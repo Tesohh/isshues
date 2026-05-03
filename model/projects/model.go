@@ -16,7 +16,7 @@ import (
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
-var NotAuthorizedCreateErr = errors.New("missing create-projects global permission!")
+var ErrNotAuthorizedCreate = errors.New("missing create-projects global permission")
 
 type Model struct {
 	app   *app.App
@@ -106,7 +106,7 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 			}
 
 			if !hasPermission {
-				cmd = model.MakeErrCmd(NotAuthorizedCreateErr)
+				cmd = model.MakeErrCmd(ErrNotAuthorizedCreate)
 				break
 			}
 

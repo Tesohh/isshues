@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	NotAuthorizedCreateErr = errors.New("you are not allowed to do this. your account is missing the create-projects global permission")
-	InternalErr            = errors.New("internal error. please contact your admin.")
-	Prefix4Err             = errors.New("the prefix must be 4 characters long")
-	DuplicatePrefixErr     = errors.New("this prefix is already taken")
+	ErrNotAuthorizedCreate = errors.New("you are not allowed to do this. your account is missing the create-projects global permission")
+	ErrInternal            = errors.New("internal error. please contact your admin")
+	ErrPrefix4             = errors.New("the prefix must be 4 characters long")
+	ErrDuplicatePrefix     = errors.New("this prefix is already taken")
 )
 
 func projectCmd(session ssh.Session, app *app.App, program **tea.Program) *cobra.Command {

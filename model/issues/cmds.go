@@ -9,13 +9,13 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/action"
-	db_complex "github.com/Tesohh/isshues/db/complex"
 	db "github.com/Tesohh/isshues/db/generated"
+	dbmore "github.com/Tesohh/isshues/db/more"
 	"github.com/Tesohh/isshues/model"
 )
 
 var (
-	NotMemberErr = errors.New("cannot load project, as you are not a member")
+	ErrNotMember = errors.New("cannot load project, as you are not a member")
 )
 
 type UpdateProjectMsg struct {
@@ -30,34 +30,34 @@ func (m Model) LoadProjectCmd() tea.Msg {
 	tx, err := m.app.DBPool.Begin(ctx)
 	if err != nil {
 		log.Error("issues.Model.LoadProjectCmd: cannot start transaction", "err", err)
-		return model.InternalErrMsg()
+		return model.ErrInternalMsg()
 	}
-	defer tx.Rollback(ctx)
+	defer func() { _ = tx.Rollback(ctx) }()
 	query := db.New(tx)
 
 	// check permission
 	hasPermission, err := query.UserIsMemberOfProject(ctx, db.UserIsMemberOfProjectParams{UserID: m.userId, ProjectID: m.projectId})
 	if err != nil {
 		log.Error("issues.Model.LoadProjectCmd: error when checking permission", "err", err)
-		return model.InternalErrMsg()
+		return model.ErrInternalMsg()
 	}
 
 	if !hasPermission {
-		return model.ErrMsg{Err: NotMemberErr}
+		return model.ErrMsg{Err: ErrNotMember}
 	}
 
 	// get project
 	project, err := query.GetProjectById(ctx, m.projectId)
 	if err != nil {
 		log.Error("issues.Model.LoadProjectCmd: error when querying project", "err", err)
-		return model.InternalErrMsg()
+		return model.ErrInternalMsg()
 	}
 
 	// load views
 	views, err := query.GetAllViewsInProject(ctx, m.projectId)
 	if err != nil {
 		log.Error("issues.Model.LoadProjectCmd: error when querying views", "err", err)
-		return model.InternalErrMsg()
+		return model.ErrInternalMsg()
 	}
 
 	return UpdateProjectMsg{Project: project, Views: views}
@@ -95,7 +95,7 @@ func (m Model) MakeLoadIssuesForViewCmd(view db.View) func() tea.Msg {
 
 		queryFail := func(err error, name string) model.ErrMsg {
 			log.Error("issues.Model.LoadIssueForViewCmd: error when querying", "table", name, "err", err)
-			return model.InternalErrMsg()
+			return model.ErrInternalMsg()
 		}
 
 		// tx, err := m.app.DBPool.Begin(ctx)
@@ -105,7 +105,7 @@ func (m Model) MakeLoadIssuesForViewCmd(view db.View) func() tea.Msg {
 		// }
 		// defer tx.Rollback(ctx)
 
-		queryStr, binds := db_complex.GenerateViewQuery(view, db_complex.ViewQueryParams{ViewerUserID: m.userId})
+		queryStr, binds := dbmore.GenerateViewQuery(view, dbmore.ViewQueryParams{ViewerUserID: m.userId})
 		issues, err := action.RunViewQuery(m.app, m.app.DBPool, queryStr, binds)
 		if err != nil {
 			return queryFail(err, "views")

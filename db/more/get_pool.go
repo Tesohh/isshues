@@ -1,4 +1,4 @@
-package db_complex
+package dbmore
 
 import (
 	"context"
@@ -16,9 +16,15 @@ func GetDbPool(connectionString string) (*pgxpool.Pool, error) {
 		return nil, err
 	}
 	dbpool, err := pgxpool.NewWithConfig(context.Background(), config)
+	if err != nil {
+		return nil, err
+	}
 
 	// Collect the custom data types once, store them in memory, and register them for every future connection.
 	customTypes, err := GetCustomDataTypes(context.Background(), dbpool)
+	if err != nil {
+		return nil, err
+	}
 	config.AfterConnect = func(ctx context.Context, conn *pgx.Conn) error {
 		for _, t := range customTypes {
 			conn.TypeMap().RegisterType(t)

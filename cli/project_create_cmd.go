@@ -27,15 +27,15 @@ func projectCreateCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra
 			tx, err := app.DBPool.Begin(ctx)
 			if err != nil {
 				log.Error("project create: cannot start transaction", "prefix", args[0], "err", err)
-				return InternalErr
+				return ErrInternal
 			}
-			defer tx.Rollback(ctx)
+			defer func() { _ = tx.Rollback(ctx) }()
 
 			query := db.New(tx)
 
 			userId, ok := app.SessionIdToUserIds[session.Context().SessionID()]
 			if !ok {
-				return errors.New("your userid was not found in the session map. might be an auth issue.")
+				return errors.New("your userid was not found in the session map. might be an auth issue")
 			}
 
 			authorized, err := query.UserHasGlobalPermission(ctx, db.UserHasGlobalPermissionParams{
@@ -45,25 +45,25 @@ func projectCreateCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra
 
 			if err != nil {
 				log.Error("project create: auth query error", "err", err)
-				return InternalErr
+				return ErrInternal
 			}
 			if !authorized {
-				return NotAuthorizedCreateErr
+				return ErrNotAuthorizedCreate
 			}
 
 			prefix := strings.ToUpper(args[0])
 			if len(prefix) != 4 {
-				return Prefix4Err
+				return ErrPrefix4
 			}
 			title := strings.Join(args[1:], " ")
 
 			err = action.CreateProject(app, query, userId, title, prefix)
 			if err != nil {
 				log.Errorf("project create: %s", err.Error())
-				if err == action.DuplicatePrefixErr {
+				if err == action.ErrDuplicatePrefix {
 					return err
 				}
-				return InternalErr
+				return ErrInternal
 			}
 
 			cmd.Println("project created!")
@@ -71,7 +71,7 @@ func projectCreateCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra
 			err = tx.Commit(ctx)
 			if err != nil {
 				log.Errorf("project create: %s", err.Error())
-				return InternalErr
+				return ErrInternal
 			}
 
 			app.Broadcast(projects.RefreshProjectsMsg{})

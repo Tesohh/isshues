@@ -22,8 +22,8 @@ import (
 )
 
 var (
-	ProjectNotFoundErr  = errors.New("project does not exist")
-	PermissionDeniedErr = errors.New("you are missing a permission")
+	ErrProjectNotFound  = errors.New("project does not exist")
+	ErrPermissionDenied = errors.New("you are missing a permission")
 )
 
 func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Command {
@@ -34,25 +34,25 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			ctx := context.Background()
 			userId, ok := app.SessionIdToUserIds[session.Context().SessionID()]
 			if !ok {
-				return errors.New("your userid was not found in the session map. might be an auth issue.")
+				return errors.New("your userid was not found in the session map. might be an auth issue")
 			}
 
 			tx, err := app.DBPool.Begin(ctx)
 			if err != nil {
 				log.Error("new: cannot start transaction", "prefix", args[0], "err", err)
-				return InternalErr
+				return ErrInternal
 			}
-			defer tx.Rollback(ctx)
+			defer func() { _ = tx.Rollback(ctx) }()
 
 			query := db.New(tx)
 
 			// get the project id
 			project, err := query.GetProjectByPrefix(ctx, strings.ToUpper(args[0]))
 			if err == pgx.ErrNoRows {
-				return ProjectNotFoundErr
+				return ErrProjectNotFound
 			} else if err != nil {
 				log.Error("new: error while fetching project from prefix", "prefix", args[0], "err", err)
-				return InternalErr
+				return ErrInternal
 			}
 
 			// check permissions
@@ -63,11 +63,11 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			})
 			if err != nil && err != pgx.ErrNoRows {
 				log.Error("new: error while checking permissions", "err", err)
-				return InternalErr
+				return ErrInternal
 			}
 
 			if !hasPermission {
-				return fmt.Errorf("%w: write-issues", PermissionDeniedErr)
+				return fmt.Errorf("%w: write-issues", ErrPermissionDenied)
 			}
 
 			if len(args) == 1 {
@@ -84,14 +84,14 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			product, err := shorthand.Process(captures, app, project.ID, userId)
 			if err != nil {
 				log.Error("new: error while processing issue", "err", err, "captures", captures)
-				return InternalErr
+				return ErrInternal
 			}
 
 			// add the pending labels and collect all ids
 			newLabels, err := action.BulkInsertLabels(app, project.ID, product.PendingLabels)
 			if err != nil {
 				log.Error("new: error while inserting new labels", "err", err)
-				return InternalErr
+				return ErrInternal
 			}
 
 			// collect ids (if only we had .iter().map()...)
@@ -135,19 +135,19 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			issue, err := action.CreateIssue(app, query, params)
 			if err != nil {
 				log.Error("new: error while creating issue", "err", err)
-				return InternalErr
+				return ErrInternal
 			}
 
 			// load user theme
 			settings, err := app.DB.GetUserSettings(ctx, userId)
 			if err != nil {
 				log.Error("settings query error", "err", err, "userId", userId)
-				return InternalErr
+				return ErrInternal
 			}
 
 			theme, ok := tint.GetTint(settings.Theme)
 			if !ok {
-				return fmt.Errorf("%w: %s. go to https://lrstanley.github.io/bubbletint/ to find a list of supported themes", ThemeNotFoundErr, settings.Theme)
+				return fmt.Errorf("%w: %s. go to https://lrstanley.github.io/bubbletint/ to find a list of supported themes", ErrThemeNotFound, settings.Theme)
 			}
 
 			// show feedback and warnings
@@ -189,7 +189,7 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			err = tx.Commit(ctx)
 			if err != nil {
 				log.Errorf("new: %s", err.Error())
-				return InternalErr
+				return ErrInternal
 			}
 
 			// broadcast a RefreshIssues{this project} to everyone

@@ -44,14 +44,14 @@ func TestParsePriorityWithViper(t *testing.T) {
 		captures := Parse(input)
 
 		wantv := 1
-		wantw := WarningInternalErrorDefaulting
+		wantw := ErrWarningInternalErrorDefaulting
 		got, warning := parsePriorityWithViper(captures.Priorities, viper)
 
 		if got != wantv {
 			t.Errorf("got: %v != want: %v", got, wantv)
 		}
 
-		if !errors.Is(warning, WarningInvalidPriority) {
+		if !errors.Is(warning, ErrWarningInvalidPriority) {
 			t.Errorf("got: %v != want: %v", warning, wantw)
 		}
 	})

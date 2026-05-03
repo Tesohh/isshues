@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-var DuplicatePrefixErr = fmt.Errorf("prefix already exists")
+var ErrDuplicatePrefix = fmt.Errorf("prefix already exists")
 
 // note: prefix must be 4 chars and uppercase already
 func CreateProject(app *app.App, query *db.Queries, userId int64, title string, prefix string) error {
@@ -25,7 +25,7 @@ func CreateProject(app *app.App, query *db.Queries, userId int64, title string, 
 	})
 	var pgerr *pgconn.PgError
 	if errors.As(err, &pgerr) && pgerr.Code == "23505" {
-		return DuplicatePrefixErr
+		return ErrDuplicatePrefix
 	} else if err != nil {
 		return fmt.Errorf("project insertion error: %w", err)
 	}

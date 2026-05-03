@@ -7,7 +7,7 @@ import (
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	"github.com/Tesohh/isshues/cli"
-	db_complex "github.com/Tesohh/isshues/db/complex"
+	dbmore "github.com/Tesohh/isshues/db/more"
 	"github.com/fsnotify/fsnotify"
 	_ "github.com/joho/godotenv/autoload"
 	tint "github.com/lrstanley/bubbletint/v2"
@@ -15,7 +15,7 @@ import (
 )
 
 func main() {
-	pool, err := db_complex.GetDbPool(os.Getenv("DATABASE_URL"))
+	pool, err := dbmore.GetDbPool(os.Getenv("DATABASE_URL"))
 	if err != nil {
 		log.Fatal("cannot connect to database!", err)
 	}
