@@ -13,8 +13,8 @@ import (
 	"github.com/Tesohh/isshues/action"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
-	"github.com/Tesohh/isshues/model/issues"
 	"github.com/Tesohh/isshues/shorthand"
+	"github.com/Tesohh/isshues/ui"
 	"github.com/charmbracelet/ssh"
 	"github.com/jackc/pgx/v5"
 	tint "github.com/lrstanley/bubbletint/v2"
@@ -153,17 +153,17 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 			// show feedback and warnings
 
 			title := fmt.Sprintf("%s %s: %s %s",
-				issues.ComponentStatusCircle(&issue, theme),
-				issues.ComponentPrefixAndCode(&issue, &project, theme),
-				issues.ComponentTitle(&issue, theme),
-				issues.ComponentDescription(&issue, theme),
+				ui.CompIssueStatusCircle(&issue, theme),
+				ui.CompIssuePrefixAndCode(&issue, &project, theme),
+				ui.CompIssueTitle(&issue, theme),
+				ui.CompIssueDescription(&issue, theme),
 			)
 
 			bottomStrs := []string{}
-			bottomStrs = append(bottomStrs, issues.ComponentPriority(&issue, theme, app.Viper)...)
-			bottomStrs = append(bottomStrs, issues.ComponentLabels(&issue, theme, allLabels)...)
-			bottomStrs = append(bottomStrs, issues.ComponentDependencies(&issue, theme, product.Dependencies)...)
-			bottomStrs = append(bottomStrs, issues.ComponentAssignees(&issue, theme, product.UserMentions, session.User())...)
+			bottomStrs = append(bottomStrs, ui.CompIssuePriority(&issue, theme, app.Viper)...)
+			bottomStrs = append(bottomStrs, ui.CompIssueLabels(&issue, theme, allLabels)...)
+			bottomStrs = append(bottomStrs, ui.CompIssueDependencies(&issue, theme, product.Dependencies)...)
+			bottomStrs = append(bottomStrs, ui.CompIssueAssignees(&issue, theme, product.UserMentions, session.User())...)
 			// TODO: handle groups
 
 			bottom := strings.Join(bottomStrs, " ")

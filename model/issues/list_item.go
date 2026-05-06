@@ -7,6 +7,7 @@ import (
 	"charm.land/bubbles/v2/list"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
+	"github.com/Tesohh/isshues/ui"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -40,17 +41,17 @@ func itemFromIssue(app *app.App, theme *tint.Tint, i *issueAndRelations, viewDat
 	}
 
 	title := fmt.Sprintf("%s %s: %s %s",
-		ComponentStatusCircle(&i.issue, theme),
-		ComponentCode(&i.issue, theme),
-		ComponentTitle(&i.issue, theme),
-		ComponentDescription(&i.issue, theme),
+		ui.CompIssueStatusCircle(&i.issue, theme),
+		ui.CompIssueCode(&i.issue, theme),
+		ui.CompIssueTitle(&i.issue, theme),
+		ui.CompIssueDescription(&i.issue, theme),
 	)
 
 	bottomStrs := []string{}
-	bottomStrs = append(bottomStrs, ComponentPriority(&i.issue, theme, app.Viper)...)
-	bottomStrs = append(bottomStrs, ComponentLabels(&i.issue, theme, labels)...)
-	bottomStrs = append(bottomStrs, ComponentDependencies(&i.issue, theme, shallowIssues)...)
-	bottomStrs = append(bottomStrs, ComponentAssignees(&i.issue, theme, users, "")...) // TODO: session.User()
+	bottomStrs = append(bottomStrs, ui.CompIssuePriority(&i.issue, theme, app.Viper)...)
+	bottomStrs = append(bottomStrs, ui.CompIssueLabels(&i.issue, theme, labels)...)
+	bottomStrs = append(bottomStrs, ui.CompIssueDependencies(&i.issue, theme, shallowIssues)...)
+	bottomStrs = append(bottomStrs, ui.CompIssueAssignees(&i.issue, theme, users, "")...) // TODO: session.User()
 	// TODO: handle groups
 
 	desc := strings.Join(bottomStrs, " ")
