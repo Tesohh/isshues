@@ -168,8 +168,8 @@ func newIssueCmd(session ssh.Session, app *app.App, _ **tea.Program) *cobra.Comm
 
 			bottom := strings.Join(bottomStrs, " ")
 
-			warningBgStyle := lipgloss.NewStyle().Background(theme.Yellow).Foreground(theme.Bg)
-			warningFgStyle := lipgloss.NewStyle().Foreground(theme.Yellow)
+			warningBgStyle := lipgloss.NewStyle().Background(ui.HLDefs.Get(ui.HLKeyWarning, theme)).Foreground(ui.HLDefs.Get(ui.HLKeyWarning, theme))
+			warningFgStyle := lipgloss.NewStyle().Foreground(ui.HLDefs.Get(ui.HLKeyBase, theme))
 			warningStrs := []string{}
 			for _, warning := range product.Warnings {
 				plate := warningBgStyle.Render(" WARNING ")

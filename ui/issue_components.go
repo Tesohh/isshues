@@ -15,34 +15,18 @@ const ComponentMutedDarkenFactor = 0.4
 const ComponentEmphDarkenFactor = 0.2
 
 func CompIssueStatusCircle(issue *db.Issue, theme *tint.Tint) string {
-	var color *tint.Color
-
-	switch issue.Status {
-	case db.StatusTodo:
-		color = theme.Green
-	case db.StatusProgress:
-		color = theme.Blue
-	case db.StatusDone:
-		color = theme.Purple
-	case db.StatusCancelled:
-		color = theme.Red
-	default:
-		color = theme.Fg
-	}
-
+	color := HLDefs.Get(HLKey("status-"+issue.Status), theme)
 	return lipgloss.NewStyle().Foreground(color).Render("◉")
 }
 
 func CompIssueCode(issue *db.Issue, theme *tint.Tint) string {
-	mutedColor := lipgloss.Darken(theme.Fg, ComponentMutedDarkenFactor)
-	mutedStyle := lipgloss.NewStyle().Foreground(mutedColor)
+	mutedStyle := lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyMuted, theme))
 
 	return mutedStyle.Render(fmt.Sprintf("#%d", issue.Code))
 }
 
 func CompIssuePrefixAndCode(issue *db.Issue, project *db.Project, theme *tint.Tint) string {
-	mutedColor := lipgloss.Darken(theme.Fg, ComponentMutedDarkenFactor)
-	mutedStyle := lipgloss.NewStyle().Foreground(mutedColor)
+	mutedStyle := lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyMuted, theme))
 
 	return mutedStyle.Render(fmt.Sprintf("#%s-%d", project.Prefix, issue.Code))
 }
@@ -52,8 +36,7 @@ func CompIssueTitle(issue *db.Issue, theme *tint.Tint) string {
 }
 
 func CompIssueDescription(issue *db.Issue, theme *tint.Tint) string {
-	mutedColor := lipgloss.Darken(theme.Fg, ComponentMutedDarkenFactor)
-	mutedStyle := lipgloss.NewStyle().Foreground(mutedColor)
+	mutedStyle := lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyMuted, theme))
 
 	if issue.Description.Valid {
 		return mutedStyle.Render("[...]")
@@ -100,8 +83,7 @@ func CompIssueLabels(_ *db.Issue, theme *tint.Tint, labels []db.Label) []string 
 }
 
 func CompIssueDependencies(_ *db.Issue, theme *tint.Tint, dependencies []db.Issue) []string {
-	mutedColor := lipgloss.Darken(theme.Fg, ComponentMutedDarkenFactor)
-	mutedStyle := lipgloss.NewStyle().Foreground(mutedColor)
+	mutedStyle := lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyMuted, theme))
 
 	strs := make([]string, 0, len(dependencies))
 	for _, dep := range dependencies {
@@ -112,9 +94,8 @@ func CompIssueDependencies(_ *db.Issue, theme *tint.Tint, dependencies []db.Issu
 }
 
 func CompIssueAssignees(_ *db.Issue, theme *tint.Tint, assignees []db.User, thisUsername string) []string {
-	mutedColor := lipgloss.Darken(theme.Fg, ComponentMutedDarkenFactor)
-	mutedStyle := lipgloss.NewStyle().Foreground(mutedColor)
-	emphStyle := lipgloss.NewStyle().Foreground(lipgloss.Darken(theme.Purple, ComponentEmphDarkenFactor))
+	mutedStyle := lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyMuted, theme))
+	emphStyle := lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyEmphasis, theme))
 
 	strs := []string{}
 	for _, assignee := range assignees {

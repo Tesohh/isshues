@@ -31,9 +31,6 @@ func RootCmd(session ssh.Session, app *app.App, progPtr **tea.Program) *cobra.Co
 				return errors.New("your userid was not found in the session map. might be an auth issue")
 			}
 
-			// // TODO: don't hardcode this
-			// theme, _ := tint.GetTint("gruvbox_dark")
-
 			settings, err := app.DB.GetUserSettings(ctx, userId)
 			if err != nil {
 				log.Error("settings query error", "err", err, "userId", userId)

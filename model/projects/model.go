@@ -13,6 +13,7 @@ import (
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/Tesohh/isshues/model"
+	"github.com/Tesohh/isshues/ui"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -167,7 +168,7 @@ func (m Model) View() string {
 		vh := m.list.Height()
 
 		// TODO: clean this up
-		view := formStyle.BorderForeground(lipgloss.Darken(m.theme.Fg, 0.5)).Render(m.creationForm.View())
+		view := formStyle.BorderForeground(ui.HLDefs.Get(ui.HLKeyOverlay, m.theme)).Render(m.creationForm.View())
 		fw := lipgloss.Width(view)
 		fh := lipgloss.Height(view)
 

@@ -90,7 +90,7 @@ func (m Model) View(currentModel model.Helper) string {
 		}
 
 	} else {
-		help = lipgloss.NewStyle().Foreground(m.Theme.Red).Render(m.err.Error())
+		help = lipgloss.NewStyle().Foreground(ui.HLDefs.Get(ui.HLKeyError, m.Theme)).Render(m.err.Error())
 	}
 
 	helpWidth := lipgloss.Width(help)
