@@ -59,7 +59,7 @@ const (
 
 type HLMap map[string]HLSet
 
-func (m HLMap) GetHL(key HLKey, theme *tint.Tint) color.Color {
+func (m HLMap) Get(key HLKey, theme *tint.Tint) color.Color {
 	set, ok := m[theme.ID]
 	if !ok {
 		return highlightFallback(key, theme)
