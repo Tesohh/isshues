@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
-	"github.com/Tesohh/isshues/common"
 	"github.com/Tesohh/isshues/config"
 	db "github.com/Tesohh/isshues/db/generated"
 	tint "github.com/lrstanley/bubbletint/v2"
@@ -69,7 +68,7 @@ func CompIssuePriority(issue *db.Issue, theme *tint.Tint, viper *viper.Viper) []
 	closestPriority, closestPriorityK := priorities.FindClosest(int(issue.Priority))
 
 	var (
-		priorityStyle = lipgloss.NewStyle().Foreground(common.KeyToColor(theme, closestPriority.ColorKey))
+		priorityStyle = lipgloss.NewStyle().Foreground(KeyToColor(theme, closestPriority.ColorKey))
 	)
 
 	if closestPriorityK != "default" {
@@ -89,7 +88,7 @@ func CompIssueLabels(_ *db.Issue, theme *tint.Tint, labels []db.Label) []string 
 	mutedColor := lipgloss.Darken(theme.Fg, ComponentMutedDarkenFactor)
 	strs := []string{}
 	for _, label := range labels {
-		style := lipgloss.NewStyle().Foreground(common.NullableKeyToColor(theme, mutedColor, label.ColorKey))
+		style := lipgloss.NewStyle().Foreground(NullableKeyToColor(theme, mutedColor, label.ColorKey))
 
 		if label.Symbol.Valid {
 			strs = append(strs, style.Render("+"+label.Symbol.String+" "))
