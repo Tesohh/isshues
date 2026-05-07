@@ -8,6 +8,7 @@ import (
 	"charm.land/bubbles/v2/list"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/Tesohh/isshues/ui"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -26,8 +27,8 @@ func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list
 
 	str := i.Title()
 
-	itemStyle := lipgloss.NewStyle().Foreground(d.theme.Fg).PaddingLeft(4)
-	selectedStyle := lipgloss.NewStyle().Foreground(d.theme.Purple).PaddingLeft(2)
+	itemStyle := lipgloss.NewStyle().Foreground(ui.HLDefs.Get(ui.HLKeyText, d.theme)).PaddingLeft(4)
+	selectedStyle := lipgloss.NewStyle().Foreground(ui.HLDefs.Get(ui.HLKeyAccent, d.theme)).PaddingLeft(2)
 	fn := itemStyle.Render
 
 	if index == m.Index() {

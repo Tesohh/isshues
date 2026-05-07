@@ -20,14 +20,14 @@ func MakeLogo(viper *viper.Viper, theme *tint.Tint) string {
 
 func MakeWaterMark(viper *viper.Viper, theme *tint.Tint) string {
 	logo := MakeLogo(viper, theme)
-	name := lipgloss.NewStyle().Foreground(theme.Fg).Render(viper.GetString("company.name"))
+	name := lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyText, theme)).Render(viper.GetString("company.name"))
 
 	return fmt.Sprintf("%s %s", logo, name)
 }
 
 func MakeWaterMarkReverse(viper *viper.Viper, theme *tint.Tint) string {
 	logo := MakeLogo(viper, theme)
-	name := lipgloss.NewStyle().Foreground(theme.Fg).Render(viper.GetString("company.name"))
+	name := lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyText, theme)).Render(viper.GetString("company.name"))
 
 	return fmt.Sprintf("%s %s", name, logo)
 }

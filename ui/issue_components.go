@@ -32,7 +32,7 @@ func CompIssuePrefixAndCode(issue *db.Issue, project *db.Project, theme *tint.Ti
 }
 
 func CompIssueTitle(issue *db.Issue, theme *tint.Tint) string {
-	return lipgloss.NewStyle().Foreground(theme.Fg).Render(issue.Title)
+	return lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyText, theme)).Render(issue.Title)
 }
 
 func CompIssueDescription(issue *db.Issue, theme *tint.Tint) string {
@@ -68,7 +68,7 @@ func CompIssuePriority(issue *db.Issue, theme *tint.Tint, viper *viper.Viper) []
 }
 
 func CompIssueLabels(_ *db.Issue, theme *tint.Tint, labels []db.Label) []string {
-	mutedColor := lipgloss.Darken(theme.Fg, ComponentMutedDarkenFactor)
+	mutedColor := HLDefs.Get(HLKeyMuted, theme)
 	strs := []string{}
 	for _, label := range labels {
 		style := lipgloss.NewStyle().Foreground(NullableKeyToColor(theme, mutedColor, label.ColorKey))

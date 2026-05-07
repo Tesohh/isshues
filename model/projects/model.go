@@ -47,7 +47,7 @@ func New(userID int64, app *app.App, theme *tint.Tint) Model {
 
 	m.list.Title = "Projects"
 	m.list.SetShowHelp(false)
-	m.list.Styles.Title = m.list.Styles.Title.Background(m.theme.Purple)
+	m.list.Styles.Title = m.list.Styles.Title.Background(ui.HLDefs.Get(ui.HLKeyAccent, theme))
 	return m
 }
 
@@ -75,7 +75,7 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 	case model.ThemeChangedMsg:
 		m.theme = msg.NewTheme
 		m.list.SetDelegate(itemDelegate{m.theme})
-		m.list.Styles.Title = m.list.Styles.Title.Background(m.theme.Purple)
+		m.list.Styles.Title = m.list.Styles.Title.Background(ui.HLDefs.Get(ui.HLKeyAccent, m.theme))
 
 	case RefreshProjectsMsg:
 		cmd = m.FetchProjectsCmd

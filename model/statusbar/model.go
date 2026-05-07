@@ -41,12 +41,15 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m Model) refreshTheme() Model {
-	m.HelpBar.Styles.ShortKey = m.HelpBar.Styles.ShortKey.Foreground(lipgloss.Darken(m.Theme.Fg, 0.3))
-	m.HelpBar.Styles.ShortDesc = m.HelpBar.Styles.ShortDesc.Foreground(lipgloss.Darken(m.Theme.Fg, 0.5))
-	m.HelpBar.Styles.ShortSeparator = m.HelpBar.Styles.ShortSeparator.Foreground(lipgloss.Darken(m.Theme.Fg, 0.5))
-	m.HelpBar.Styles.FullKey = m.HelpBar.Styles.ShortKey.Foreground(lipgloss.Darken(m.Theme.Fg, 0.3))
-	m.HelpBar.Styles.FullDesc = m.HelpBar.Styles.ShortDesc.Foreground(lipgloss.Darken(m.Theme.Fg, 0.5))
-	m.HelpBar.Styles.FullSeparator = m.HelpBar.Styles.FullSeparator.Foreground(lipgloss.Darken(m.Theme.Fg, 0.5))
+	muted := ui.HLDefs.Get(ui.HLKeyMuted, m.Theme)
+	subtle := ui.HLDefs.Get(ui.HLKeySubtle, m.Theme)
+
+	m.HelpBar.Styles.ShortKey = m.HelpBar.Styles.ShortKey.Foreground(subtle)
+	m.HelpBar.Styles.ShortDesc = m.HelpBar.Styles.ShortDesc.Foreground(muted)
+	m.HelpBar.Styles.ShortSeparator = m.HelpBar.Styles.ShortSeparator.Foreground(muted)
+	m.HelpBar.Styles.FullKey = m.HelpBar.Styles.ShortKey.Foreground(subtle)
+	m.HelpBar.Styles.FullDesc = m.HelpBar.Styles.ShortDesc.Foreground(muted)
+	m.HelpBar.Styles.FullSeparator = m.HelpBar.Styles.FullSeparator.Foreground(muted)
 	return m
 }
 

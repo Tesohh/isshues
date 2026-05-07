@@ -6,6 +6,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/Tesohh/isshues/model"
+	"github.com/Tesohh/isshues/ui"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
 
@@ -86,17 +87,23 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) View() string {
 	out := []string{}
 
+	var (
+		accentColor  = ui.HLDefs.Get(ui.HLKeyAccent, m.theme)
+		bgColor      = ui.HLDefs.Get(ui.HLKeyBase, m.theme)
+		surfaceColor = ui.HLDefs.Get(ui.HLKeySurface, m.theme)
+	)
+
 	for i, tab := range m.tabs {
 		if i == m.selected {
-			out = append(out, activeTabStyle.Background(m.theme.Purple).Foreground(m.theme.Bg).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
+			out = append(out, activeTabStyle.Background(accentColor).Foreground(bgColor).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
 		} else {
-			out = append(out, tabStyle.Background(lipgloss.Darken(m.theme.Black, 0.5)).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
+			out = append(out, tabStyle.Background(surfaceColor).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
 		}
 	}
 
 	row := lipgloss.JoinHorizontal(lipgloss.Top, out...)
 
-	mutedStyle := lipgloss.NewStyle().Foreground(lipgloss.Darken(m.theme.Fg, 0.4))
+	mutedStyle := lipgloss.NewStyle().Foreground(ui.HLDefs.Get(ui.HLKeyMuted, m.theme))
 	rightText := mutedStyle.Render(m.rightText)
 
 	rowWidth := lipgloss.Width(row)
