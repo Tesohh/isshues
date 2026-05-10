@@ -78,12 +78,12 @@ func (m Panels) Update(msg tea.Msg) (Panels, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m = m.SetSize(msg.Width, msg.Height)
 
-	case tea.KeyPressMsg:
-		m.list, cmd = m.list.Update(msg)
-
 	case model.ThemeChangedMsg:
 		m = m.SetTheme(msg.NewTheme)
 	}
+
+	m.list, cmd = m.list.Update(msg)
+
 	return m, cmd
 }
 

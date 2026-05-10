@@ -132,15 +132,6 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 			cmds = append(cmds, m.MakeLoadIssuesForSelectedViewCmd())
 		}
 
-	case tea.KeyPressMsg:
-		id := m.tabs.SelectedID()
-
-		var cmd tea.Cmd
-		if model, ok := m.viewModels[id]; ok {
-			m.viewModels[id], cmd = model.Update(msg)
-		}
-		cmds = append(cmds, cmd)
-
 	case tea.WindowSizeMsg:
 		m.fullScreenWidth = msg.Width
 		m.fullScreenHeight = msg.Height
@@ -149,6 +140,15 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 	case model.ThemeChangedMsg:
 		m.theme = msg.NewTheme
 		cmds = append(cmds, m.PropagateAllModels(msg)...)
+
+	default:
+		id := m.tabs.SelectedID()
+
+		var cmd tea.Cmd
+		if model, ok := m.viewModels[id]; ok {
+			m.viewModels[id], cmd = model.Update(msg)
+		}
+		cmds = append(cmds, cmd)
 	}
 	return m, tea.Batch(cmds...)
 }
