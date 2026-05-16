@@ -3,14 +3,15 @@ package issues
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/Tesohh/isshues/model"
+	"github.com/Tesohh/isshues/model/markdown"
 	"github.com/Tesohh/isshues/model/tabs"
 	tint "github.com/lrstanley/bubbletint/v2"
 )
@@ -27,6 +28,8 @@ type Model struct {
 	projectId int64
 
 	tabs tabs.Model
+
+	MARKDOWN markdown.Model
 
 	project    db.Project
 	views      []db.View          // TODO consider switching this to a map
@@ -154,21 +157,35 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	style := lipgloss.NewStyle().
-		Height(m.fullScreenHeight - 1).
-		MaxHeight(m.fullScreenHeight - 1).
-		Width(m.fullScreenWidth).
-		MaxWidth(m.fullScreenWidth)
-
-	viewRender := ""
-	if viewModel, ok := m.viewModels[m.tabs.SelectedID()]; ok {
-		viewRender = viewModel.View()
-	}
-
-	render := style.Render(lipgloss.JoinVertical(lipgloss.Top,
-		m.tabs.View(),
-		viewRender,
-	))
+	// style := lipgloss.NewStyle().
+	// 	Height(m.fullScreenHeight - 1).
+	// 	MaxHeight(m.fullScreenHeight - 1).
+	// 	Width(m.fullScreenWidth).
+	// 	MaxWidth(m.fullScreenWidth)
+	//
+	// viewRender := ""
+	// if viewModel, ok := m.viewModels[m.tabs.SelectedID()]; ok {
+	// 	viewRender = viewModel.View()
+	// }
+	//
+	// render := style.Render(lipgloss.JoinVertical(lipgloss.Top,
+	// 	m.tabs.View(),
+	// 	viewRender,
+	// ))
+	m.MARKDOWN = markdown.New()
+	m.MARKDOWN = m.MARKDOWN.SetTheme(m.theme).SetContent(strings.Join([]string{
+		"# kabashando",
+		"sto ascoltando un po di **phonk** _personallizato_",
+		"## Show me the code",
+		"```rust",
+		"fn main() {",
+		"	println!(\"gorni\")",
+		"}",
+		"```",
+		"### Very nice",
+		"yea i `know`",
+	}, "\n"))
+	render := m.MARKDOWN.View()
 
 	return render
 }
