@@ -1,5 +1,7 @@
 package issuedetail
 
 func (m Model) View() string {
-	return m.descriptionViewport.View()
+	tabs := m.tabs.View()
+	description := m.descriptionViewport.View()
+	return tabs + "\n" + description
 }

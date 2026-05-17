@@ -21,7 +21,7 @@ var (
 			BorderRight(false)
 )
 
-var nerdFontNumbers = []rune{'󰲠', '󰲢', '󰲤', '󰲦', '󰲨', '󰲪', '󰲬', '󰲮', '󰲰', '󰿬'}
+var DefaultGlyphs = []string{"󰲠", "󰲢", "󰲤", "󰲦", "󰲨", "󰲪", "󰲬", "󰲮", "󰲰", "󰿬"}
 
 type Tab struct {
 	ID    int64
@@ -34,6 +34,7 @@ type Model struct {
 	tabs      []Tab
 	theme     *tint.Tint
 	rightText string
+	glyphs    []string
 	keymap    Keymap
 }
 
@@ -41,7 +42,7 @@ type UpdateTabsMsg struct {
 	Tabs []Tab
 }
 
-func New(width int, tabs []Tab, theme *tint.Tint, rightText string, keymap Keymap) Model {
+func New(width int, tabs []Tab, theme *tint.Tint, rightText string, keymap Keymap, glyphs []string) Model {
 	return Model{
 		width:     width,
 		selected:  0,
@@ -49,6 +50,7 @@ func New(width int, tabs []Tab, theme *tint.Tint, rightText string, keymap Keyma
 		theme:     theme,
 		rightText: rightText,
 		keymap:    keymap,
+		glyphs:    glyphs,
 	}
 }
 
@@ -100,9 +102,9 @@ func (m Model) View() string {
 
 	for i, tab := range m.tabs {
 		if i == m.selected {
-			out = append(out, activeTabStyle.Background(accentColor).Foreground(bgColor).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
+			out = append(out, activeTabStyle.Background(accentColor).Foreground(bgColor).Render(string(m.glyphs[i])+"  "+tab.Title))
 		} else {
-			out = append(out, tabStyle.Background(surfaceColor).Render(string(nerdFontNumbers[i])+"  "+tab.Title))
+			out = append(out, tabStyle.Background(surfaceColor).Render(string(m.glyphs[i])+"  "+tab.Title))
 		}
 	}
 
@@ -130,6 +132,16 @@ func (m Model) SelectedID() int64 {
 
 func (m Model) SetRightText(rightText string) Model {
 	m.rightText = rightText
+	return m
+}
+
+func (m Model) SetTheme(theme *tint.Tint) Model {
+	m.theme = theme
+	return m
+}
+
+func (m Model) SetWidth(width int) Model {
+	m.width = width
 	return m
 }
 

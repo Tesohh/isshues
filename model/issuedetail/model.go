@@ -1,11 +1,18 @@
 package issuedetail
 
 import (
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/Tesohh/isshues/model/markdown"
+	"github.com/Tesohh/isshues/model/tabs"
 	tint "github.com/lrstanley/bubbletint/v2"
+)
+
+const (
+	DescriptionTabID = 0
+	RelsTabID        = 1
 )
 
 type Model struct {
@@ -21,6 +28,7 @@ type Model struct {
 
 	descriptionMD       markdown.Model
 	descriptionViewport viewport.Model
+	tabs                tabs.Model
 
 	width, height int
 
@@ -41,9 +49,24 @@ func New() Model {
 		shallowIssues:          map[int64]db.Issue{},
 		descriptionMD:          markdown.New(),
 		descriptionViewport:    viewport.New(),
-		width:                  0,
-		height:                 0,
-		theme:                  &tint.Tint{},
+		tabs: tabs.New(0, []tabs.Tab{
+			tabs.NewTab(DescriptionTabID, "Description"),
+			tabs.NewTab(RelsTabID, "Rels"),
+		}, &tint.Tint{}, "", tabs.Keymap{
+			Tab1:  key.NewBinding(key.WithKeys("ctrl+t")),
+			Tab2:  key.NewBinding(key.WithKeys("ctrl+r")),
+			Tab3:  key.NewBinding(key.WithDisabled()),
+			Tab4:  key.NewBinding(key.WithDisabled()),
+			Tab5:  key.NewBinding(key.WithDisabled()),
+			Tab6:  key.NewBinding(key.WithDisabled()),
+			Tab7:  key.NewBinding(key.WithDisabled()),
+			Tab8:  key.NewBinding(key.WithDisabled()),
+			Tab9:  key.NewBinding(key.WithDisabled()),
+			Tab10: key.NewBinding(key.WithDisabled()),
+		}, []string{"ctrl+t", "ctrl+r"}),
+		width:  0,
+		height: 0,
+		theme:  &tint.Tint{},
 	}
 }
 
@@ -57,6 +80,8 @@ func (m Model) SetTheme(theme *tint.Tint) Model {
 	if m.width != 0 {
 		m.descriptionMD = m.descriptionMD.BuildRenderer()
 	}
+
+	m.tabs = m.tabs.SetTheme(theme)
 	return m
 }
 
@@ -72,6 +97,8 @@ func (m Model) SetSize(width, height int) Model {
 	if m.theme != nil {
 		m.descriptionMD = m.descriptionMD.BuildRenderer()
 	}
+
+	m.tabs = m.tabs.SetWidth(width)
 
 	return m
 }
