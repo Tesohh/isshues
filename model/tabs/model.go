@@ -3,6 +3,7 @@ package tabs
 import (
 	"strings"
 
+	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"github.com/Tesohh/isshues/model"
@@ -33,19 +34,21 @@ type Model struct {
 	tabs      []Tab
 	theme     *tint.Tint
 	rightText string
+	keymap    Keymap
 }
 
 type UpdateTabsMsg struct {
 	Tabs []Tab
 }
 
-func New(width int, tabs []Tab, theme *tint.Tint, rightText string) Model {
+func New(width int, tabs []Tab, theme *tint.Tint, rightText string, keymap Keymap) Model {
 	return Model{
 		width:     width,
 		selected:  0,
 		tabs:      tabs,
 		theme:     theme,
 		rightText: rightText,
+		keymap:    keymap,
 	}
 }
 
@@ -69,16 +72,18 @@ func (m Model) Update(msg tea.Msg) (Model, tea.Cmd) {
 	case model.ThemeChangedMsg:
 		m.theme = msg.NewTheme
 	case tea.KeyPressMsg:
-		r := msg.Key().Code
-		if msg.Mod == tea.ModCtrl && r >= '0' && r <= '9' {
-			num := int(r - '0')
-			if num == 0 {
-				num = 10
-			}
+		bindings := []key.Binding{
+			m.keymap.Tab1, m.keymap.Tab2, m.keymap.Tab3, m.keymap.Tab4, m.keymap.Tab5,
+			m.keymap.Tab6, m.keymap.Tab7, m.keymap.Tab8, m.keymap.Tab9, m.keymap.Tab10,
+		}
 
-			index := min(num-1, len(m.tabs)-1)
-			m.selected = index
-			cmd = SwitchTabCmd
+		for i, binding := range bindings {
+			if key.Matches(msg.Key(), binding) {
+				index := min(i, len(m.tabs)-1)
+				m.selected = index
+				cmd = SwitchTabCmd
+				break
+			}
 		}
 	}
 	return m, cmd
@@ -126,4 +131,8 @@ func (m Model) SelectedID() int64 {
 func (m Model) SetRightText(rightText string) Model {
 	m.rightText = rightText
 	return m
+}
+
+func (m Model) Help() []key.Binding {
+	return m.keymap.Help()
 }

@@ -7,6 +7,7 @@ import (
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"charm.land/log/v2"
 	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
@@ -45,7 +46,7 @@ func New(userId int64, projectId int64, app *app.App, theme *tint.Tint) Model {
 		showFullHelp: false,
 		userId:       userId,
 		projectId:    projectId,
-		tabs:         tabs.New(0, []tabs.Tab{}, theme, ""),
+		tabs:         tabs.New(0, []tabs.Tab{}, theme, "", tabs.DefaultKeymap),
 		TESTDETAIL:   issuedetail.New().SetTheme(theme),
 		viewData:     make(map[int64]viewData),
 		viewModels:   make(map[int64]Panels),
@@ -260,22 +261,22 @@ func (m Model) Update(msg tea.Msg) (model.NavModel, tea.Cmd) {
 }
 
 func (m Model) View() string {
-	// style := lipgloss.NewStyle().
-	// 	Height(m.fullScreenHeight - 1).
-	// 	MaxHeight(m.fullScreenHeight - 1).
-	// 	Width(m.fullScreenWidth).
-	// 	MaxWidth(m.fullScreenWidth)
-	//
-	// viewRender := ""
-	// if viewModel, ok := m.viewModels[m.tabs.SelectedID()]; ok {
-	// 	viewRender = viewModel.View()
-	// }
-	//
-	// render := style.Render(lipgloss.JoinVertical(lipgloss.Top,
-	// 	m.tabs.View(),
-	// 	viewRender,
-	// ))
-	render := m.TESTDETAIL.View()
+	style := lipgloss.NewStyle().
+		Height(m.fullScreenHeight - 1).
+		MaxHeight(m.fullScreenHeight - 1).
+		Width(m.fullScreenWidth).
+		MaxWidth(m.fullScreenWidth)
+
+	viewRender := ""
+	if viewModel, ok := m.viewModels[m.tabs.SelectedID()]; ok {
+		viewRender = viewModel.View()
+	}
+
+	render := style.Render(lipgloss.JoinVertical(lipgloss.Top,
+		m.tabs.View(),
+		viewRender,
+	))
+	// render := m.TESTDETAIL.View()
 	return render
 }
 
