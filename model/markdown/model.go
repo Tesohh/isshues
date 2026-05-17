@@ -243,6 +243,12 @@ func (m Model) SetTheme(theme *tint.Tint) Model {
 	return m
 }
 
+func (m Model) SetWidth(width int) Model {
+	_ = glamour.WithWordWrap(width)(m.renderer)
+	return m
+}
+
+// as an optimization, markdown is only rendered once when setting the content, not when calling View
 func (m Model) SetContent(content string) Model {
 	m.content = content
 	out, err := m.renderer.Render(m.content)
