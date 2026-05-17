@@ -13,6 +13,8 @@ import (
 
 type Model struct {
 	renderer *glamour.TermRenderer
+	styles   *ansi.StyleConfig
+	width    int
 	content  string
 	output   string
 }
@@ -26,229 +28,237 @@ func (m Model) SetTheme(theme *tint.Tint) Model {
 		return new(ui.Rgb2Str(ui.HLDefs.Get(key, theme)))
 	}
 
-	m.renderer, _ = glamour.NewTermRenderer(
-		glamour.WithStyles(
-			ansi.StyleConfig{
-				Document: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{
-						BlockPrefix: "\n",
-						BlockSuffix: "\n",
-						Color:       hl(ui.HLKeyText),
-					},
-					Margin: new(uint(2)),
+	m.styles = &ansi.StyleConfig{
+		Document: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{
+				BlockPrefix: "\n",
+				BlockSuffix: "\n",
+				Color:       hl(ui.HLKeyText),
+			},
+			Margin: new(uint(2)),
+		},
+		BlockQuote: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{},
+			Indent:         new(uint(1)),
+			IndentToken:    new("│ "),
+		},
+		List: ansi.StyleList{
+			StyleBlock: ansi.StyleBlock{
+				StylePrimitive: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyText),
 				},
-				BlockQuote: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{},
-					Indent:         new(uint(1)),
-					IndentToken:    new("│ "),
+			},
+			LevelIndent: 2,
+		},
+		Heading: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{
+				BlockSuffix: "\n",
+				Color:       hl(ui.HLKeyAccent),
+				Bold:        new(true),
+			},
+		},
+		H1: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{
+				Prefix: "# ",
+				Bold:   new(true),
+			},
+		},
+		H2: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{
+				Prefix: "## ",
+			},
+		},
+		H3: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{
+				Prefix: "### ",
+			},
+		},
+		H4: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{
+				Prefix: "#### ",
+			},
+		},
+		H5: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{
+				Prefix: "##### ",
+			},
+		},
+		H6: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{
+				Prefix: "###### ",
+			},
+		},
+		Strikethrough: ansi.StylePrimitive{
+			CrossedOut: new(true),
+		},
+		Emph: ansi.StylePrimitive{
+			Color:  hl(ui.HLKeyItalic),
+			Italic: new(true),
+		},
+		Strong: ansi.StylePrimitive{
+			Color: hl(ui.HLKeyBold),
+			Bold:  new(true),
+		},
+		HorizontalRule: ansi.StylePrimitive{
+			Color:  hl(ui.HLKeyMuted),
+			Format: "\n--------\n",
+		},
+		Item: ansi.StylePrimitive{
+			BlockPrefix: "• ",
+		},
+		Enumeration: ansi.StylePrimitive{
+			BlockPrefix: ". ",
+			Color:       hl(ui.HLKeyEmphasis),
+		},
+		Task: ansi.StyleTask{
+			StylePrimitive: ansi.StylePrimitive{},
+			Ticked:         "[✓] ",
+			Unticked:       "[ ] ",
+		},
+		Link: ansi.StylePrimitive{
+			Color:     hl(ui.HLKeyEmphasis),
+			Underline: new(true),
+		},
+		LinkText: ansi.StylePrimitive{
+			Color: hl(ui.HLKeyAccent),
+		},
+		Image: ansi.StylePrimitive{
+			Color:     hl(ui.HLKeyEmphasis),
+			Underline: new(true),
+		},
+		ImageText: ansi.StylePrimitive{
+			Color:  hl(ui.HLKeyAccent),
+			Format: "Image: {{.text}} →",
+		},
+		Code: ansi.StyleBlock{
+			StylePrimitive: ansi.StylePrimitive{
+				Color: hl(ui.HLKeySuccess),
+			},
+		},
+		CodeBlock: ansi.StyleCodeBlock{
+			StyleBlock: ansi.StyleBlock{
+				StylePrimitive: ansi.StylePrimitive{
+					BackgroundColor: hl(ui.HLKeySurface),
 				},
-				List: ansi.StyleList{
-					StyleBlock: ansi.StyleBlock{
-						StylePrimitive: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyText),
-						},
-					},
-					LevelIndent: 2,
+				Margin: new(uint(2)),
+			},
+			Chroma: &ansi.Chroma{
+				Text: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyText),
 				},
-				Heading: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{
-						BlockSuffix: "\n",
-						Color:       hl(ui.HLKeyAccent),
-						Bold:        new(true),
-					},
+				Error: ansi.StylePrimitive{
+					Color:           hl(ui.HLKeyText),
+					BackgroundColor: hl(ui.HLKeyError),
 				},
-				H1: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{
-						Prefix: "# ",
-						Bold:   new(true),
-					},
+				Comment: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaComment),
 				},
-				H2: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{
-						Prefix: "## ",
-					},
+				CommentPreproc: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaCommentPreproc),
 				},
-				H3: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{
-						Prefix: "### ",
-					},
+				Keyword: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaKeyword),
 				},
-				H4: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{
-						Prefix: "#### ",
-					},
+				KeywordReserved: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaKeywordReserved),
 				},
-				H5: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{
-						Prefix: "##### ",
-					},
+				KeywordNamespace: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaKeywordNamespace),
 				},
-				H6: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{
-						Prefix: "###### ",
-					},
+				KeywordType: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaKeywordType),
 				},
-				Strikethrough: ansi.StylePrimitive{
-					CrossedOut: new(true),
+				Operator: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaOperator),
 				},
-				Emph: ansi.StylePrimitive{
+				Punctuation: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaPunctuation),
+				},
+				Name: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaName),
+				},
+				NameConstant: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaNameConstant),
+				},
+				NameBuiltin: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaNameBuiltin),
+				},
+				NameTag: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaNameTag),
+				},
+				NameAttribute: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaNameAttribute),
+				},
+				NameClass: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaNameClass),
+				},
+				NameDecorator: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaNameDecorator),
+				},
+				NameFunction: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaNameFunction),
+				},
+				LiteralNumber: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaLiteralNumber),
+				},
+				LiteralString: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaLiteralString),
+				},
+				LiteralStringEscape: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaLiteralStringEscape),
+				},
+				GenericDeleted: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaGenericDeleted),
+				},
+				GenericEmph: ansi.StylePrimitive{
 					Color:  hl(ui.HLKeyItalic),
 					Italic: new(true),
 				},
-				Strong: ansi.StylePrimitive{
+				GenericInserted: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaGenericInserted),
+				},
+				GenericStrong: ansi.StylePrimitive{
 					Color: hl(ui.HLKeyBold),
 					Bold:  new(true),
 				},
-				HorizontalRule: ansi.StylePrimitive{
-					Color:  hl(ui.HLKeyMuted),
-					Format: "\n--------\n",
+				GenericSubheading: ansi.StylePrimitive{
+					Color: hl(ui.HLKeyChromaGenericSubheading),
 				},
-				Item: ansi.StylePrimitive{
-					BlockPrefix: "• ",
+				Background: ansi.StylePrimitive{
+					BackgroundColor: hl(ui.HLKeySurface),
 				},
-				Enumeration: ansi.StylePrimitive{
-					BlockPrefix: ". ",
-					Color:       hl(ui.HLKeyEmphasis),
-				},
-				Task: ansi.StyleTask{
-					StylePrimitive: ansi.StylePrimitive{},
-					Ticked:         "[✓] ",
-					Unticked:       "[ ] ",
-				},
-				Link: ansi.StylePrimitive{
-					Color:     hl(ui.HLKeyEmphasis),
-					Underline: new(true),
-				},
-				LinkText: ansi.StylePrimitive{
-					Color: hl(ui.HLKeyAccent),
-				},
-				Image: ansi.StylePrimitive{
-					Color:     hl(ui.HLKeyEmphasis),
-					Underline: new(true),
-				},
-				ImageText: ansi.StylePrimitive{
-					Color:  hl(ui.HLKeyAccent),
-					Format: "Image: {{.text}} →",
-				},
-				Code: ansi.StyleBlock{
-					StylePrimitive: ansi.StylePrimitive{
-						Color: hl(ui.HLKeySuccess),
-					},
-				},
-				CodeBlock: ansi.StyleCodeBlock{
-					StyleBlock: ansi.StyleBlock{
-						StylePrimitive: ansi.StylePrimitive{
-							BackgroundColor: hl(ui.HLKeySurface),
-						},
-						Margin: new(uint(2)),
-					},
-					Chroma: &ansi.Chroma{
-						Text: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyText),
-						},
-						Error: ansi.StylePrimitive{
-							Color:           hl(ui.HLKeyText),
-							BackgroundColor: hl(ui.HLKeyError),
-						},
-						Comment: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaComment),
-						},
-						CommentPreproc: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaCommentPreproc),
-						},
-						Keyword: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaKeyword),
-						},
-						KeywordReserved: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaKeywordReserved),
-						},
-						KeywordNamespace: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaKeywordNamespace),
-						},
-						KeywordType: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaKeywordType),
-						},
-						Operator: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaOperator),
-						},
-						Punctuation: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaPunctuation),
-						},
-						Name: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaName),
-						},
-						NameConstant: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaNameConstant),
-						},
-						NameBuiltin: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaNameBuiltin),
-						},
-						NameTag: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaNameTag),
-						},
-						NameAttribute: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaNameAttribute),
-						},
-						NameClass: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaNameClass),
-						},
-						NameDecorator: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaNameDecorator),
-						},
-						NameFunction: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaNameFunction),
-						},
-						LiteralNumber: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaLiteralNumber),
-						},
-						LiteralString: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaLiteralString),
-						},
-						LiteralStringEscape: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaLiteralStringEscape),
-						},
-						GenericDeleted: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaGenericDeleted),
-						},
-						GenericEmph: ansi.StylePrimitive{
-							Color:  hl(ui.HLKeyItalic),
-							Italic: new(true),
-						},
-						GenericInserted: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaGenericInserted),
-						},
-						GenericStrong: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyBold),
-							Bold:  new(true),
-						},
-						GenericSubheading: ansi.StylePrimitive{
-							Color: hl(ui.HLKeyChromaGenericSubheading),
-						},
-						Background: ansi.StylePrimitive{
-							BackgroundColor: hl(ui.HLKeySurface),
-						},
-					},
-				},
-				Table: ansi.StyleTable{
-					StyleBlock: ansi.StyleBlock{
-						StylePrimitive: ansi.StylePrimitive{},
-					},
-				},
-				DefinitionDescription: ansi.StylePrimitive{
-					BlockPrefix: "\n🠶 ",
-				},
-			}),
+			},
+		},
+		Table: ansi.StyleTable{
+			StyleBlock: ansi.StyleBlock{
+				StylePrimitive: ansi.StylePrimitive{},
+			},
+		},
+		DefinitionDescription: ansi.StylePrimitive{
+			BlockPrefix: "\n🠶 ",
+		},
+	}
+
+	return m
+}
+
+func (m Model) SetWidth(width int) Model {
+	m.width = width
+	return m
+}
+
+// WARN: requires SetTheme and SetWidth to have been called already
+func (m Model) BuildRenderer() Model {
+	m.renderer, _ = glamour.NewTermRenderer(
+		glamour.WithStyles(*m.styles),
+		glamour.WithWordWrap(m.width),
 		glamour.WithChromaFormatter("terminal16m"),
 	)
 	return m
 }
 
-func (m Model) SetWidth(width int) Model {
-	_ = glamour.WithWordWrap(width)(m.renderer)
-	return m
-}
-
 // as an optimization, markdown is only rendered once when setting the content, not when calling View
+// WARN: requires BuildRender to have been called already
 func (m Model) SetContent(content string) Model {
 	m.content = content
 	out, err := m.renderer.Render(m.content)
