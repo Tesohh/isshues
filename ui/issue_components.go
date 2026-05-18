@@ -11,9 +11,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-const ComponentMutedDarkenFactor = 0.4
-const ComponentEmphDarkenFactor = 0.2
-
 func CompIssueStatusCircle(issue *db.Issue, theme *tint.Tint) string {
 	color := HLDefs.Get(HLKey("status-"+issue.Status), theme)
 	return lipgloss.NewStyle().Foreground(color).Render("◉")
@@ -115,4 +112,8 @@ func CompIssueAssignees(_ *db.Issue, theme *tint.Tint, assignees []db.User, this
 	}
 
 	return strs
+}
+
+func CompIssueRecruiter(_ *db.Issue, theme *tint.Tint, user db.User) string {
+	return lipgloss.NewStyle().Foreground(HLDefs.Get(HLKeyText, theme)).Render("@" + user.Username)
 }

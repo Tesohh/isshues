@@ -1,7 +1,8 @@
 package issuedetail
 
 func (m Model) View() string {
+	header := m.MakeHeader()
 	tabs := m.tabs.View()
 	description := m.descriptionViewport.View()
-	return tabs + "\n" + description
+	return header + "\n" + tabs + "\n" + description
 }

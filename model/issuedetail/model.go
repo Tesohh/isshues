@@ -4,6 +4,7 @@ import (
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/viewport"
 	tea "charm.land/bubbletea/v2"
+	"github.com/Tesohh/isshues/app"
 	db "github.com/Tesohh/isshues/db/generated"
 	"github.com/Tesohh/isshues/model/markdown"
 	"github.com/Tesohh/isshues/model/tabs"
@@ -16,6 +17,8 @@ const (
 )
 
 type Model struct {
+	app *app.App
+
 	issue db.Issue
 
 	assigneeIDs            []int64 // all assignees referenced by issue
@@ -38,8 +41,9 @@ type Model struct {
 // TODO: if issue.description.valid then open that "tab" by default
 // Else open the rels "Tab"
 
-func New() Model {
+func New(app *app.App) Model {
 	return Model{
+		app:                    app,
 		issue:                  db.Issue{},
 		assigneeIDs:            []int64{},
 		labelIDs:               []int64{},

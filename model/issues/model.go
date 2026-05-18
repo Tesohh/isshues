@@ -46,7 +46,7 @@ func New(userId int64, projectId int64, app *app.App, theme *tint.Tint) Model {
 		userId:       userId,
 		projectId:    projectId,
 		tabs:         tabs.New(0, []tabs.Tab{}, theme, "", tabs.DefaultKeymap, tabs.DefaultGlyphs),
-		TESTDETAIL:   issuedetail.New().SetTheme(theme),
+		TESTDETAIL:   issuedetail.New(app).SetTheme(theme),
 		viewData:     make(map[int64]viewData),
 		viewModels:   make(map[int64]Panels),
 	}
